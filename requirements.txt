@@ -1,3 +1,7 @@
 invoke==0.13.0
 numpy==1.11.2
 acousticsim==0.1.5
+awscli==1.11.1
+boto3==1.4.0
+ipython==5.1.0
+ipython-genutils==0.1.0
