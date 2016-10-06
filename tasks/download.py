@@ -1,5 +1,5 @@
 from os import environ
-from invoke import task
+from invoke import task, run
 import boto3
 from unipath import Path
 import pandas
@@ -8,16 +8,22 @@ BUCKET_NAME = 'words-in-transition'
 ALL_FILES = ['words-in-transition.zip',
              'grunt.Message.json']
 DOWNLOAD_DIR = Path('downloads')
-OUTPUT_DIR = Path('output')
+DATA_DIR = Path('data')
+SOUNDS_DIR = Path(DATA_DIR, 'sounds')
 
-for expected_dir in [DOWNLOAD_DIR, OUTPUT_DIR]:
+for expected_dir in [DOWNLOAD_DIR, DATA_DIR, SOUNDS_DIR]:
     if not expected_dir.isdir():
         expected_dir.mkdir()
 
-@task(help=dict(filename=("The name of the file to download. Defaults to "
-                          "downloading all relevant files."),
-                profile="The name of the AWS profile to use. Optional.",
-                overwrite="Whether to overwrite existing files."))
+@task(
+    help=dict(
+        filename=("The name of the file to download. Defaults to "
+                  "downloading all relevant files."),
+        profile="The name of the AWS profile to use. Optional.",
+        overwrite="Overwrite existing files? Default is false.",
+    ),
+)
+
 def download(ctx, filename=None, profile=None, overwrite=False):
     """Download data from the internet."""
     files = _determine_files_to_download(filename, overwrite)
@@ -32,11 +38,13 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         dst = Path(DOWNLOAD_DIR, filename)
         bucket.download_file(src, dst)
 
-    if 'grunt.Message.json' in files:
-        _format_messages()
+    _format_messages()
+    if overwrite:
+        _unpack_zip()
 
 
 def _determine_files_to_download(filename, overwrite):
+    # Create a list of files and remove the ones that exist unless overwriting
     files = [filename] if filename else ALL_FILES
 
     for filename in files:
@@ -46,36 +54,21 @@ def _determine_files_to_download(filename, overwrite):
     return files
 
 
-def _unpack_and_cleanup_zip():
-    # Unpack and cleanup zip
-    cmds = [
-        'unzip words-in-transition.zip',
-        'mkdir data/',
-        'mv webapps/telephone/media/words-in-transition data/imitations',
-        'rm -r webapps'
-    ]
-    for cmd in cmds:
-        run(cmd)
-
-
 def _format_messages():
-    output_columns = ['category', 'seed_id', 'branch_id_list', 'generation',
-                      'message_id', 'audio']
+    # Turn Django model data into a csv of messages with all parts labeled
+    output_columns = ['message_id', 'category', 'seed_id', 'branch_id_list',
+                      'generation', 'audio']
 
-    messages = pandas.read_json(Path(DOWNLOAD_DIR, 'grunt.Message.json'))
-    field_names = messages.iloc[0].fields.keys()
-    for field in field_names:
-        messages[field] = messages.fields.apply(lambda x: x[field])
-    del messages['fields']
+    messages = _read_downloaded_messages()
+    _label_branches(messages)
+    _label_seeds(messages)
+    _update_audio_filenames(messages)
 
-    messages.rename(columns={'pk': 'message_id'}, inplace=True)
+    messages = messages[output_columns]
+    messages.to_csv(Path(DATA_DIR, 'sounds.csv'), index=False)
 
-    path_data = messages.audio.str.split('/')
-    messages['game'] = path_data.str.get(0)
-    messages['category'] = path_data.str.get(1)
 
-    messages = messages.ix[messages.game == 'words-in-transition']
-    del messages['game']
+def _label_branches(messages):
 
     def find_messages_on_branch(message, found):
         message_data = messages.ix[messages.message_id == message].squeeze()
@@ -90,7 +83,7 @@ def _format_messages():
     for message in messages.message_id:
         branches[message] = find_messages_on_branch(message, [])
 
-    unique_branches = collapse_branches(branches)
+    unique_branches = _collapse_branches(branches)
     labeled_branches = pandas.DataFrame({'message_list': unique_branches})
     labeled_branches['branch_id'] = range(len(labeled_branches))
 
@@ -99,6 +92,9 @@ def _format_messages():
         return labeled_branches.ix[is_in, 'branch_id'].tolist()
 
     messages['branch_id_list'] = messages.message_id.apply(find_all_branches)
+
+
+def _label_seeds(messages):
 
     def find_seed_id(message):
         message_data = messages.ix[messages.message_id == message].squeeze()
@@ -110,15 +106,29 @@ def _format_messages():
 
     messages['seed_id'] = messages.message_id.apply(find_seed_id).astype(int)
 
-    messages = messages[output_columns]
-    messages.to_csv(Path(OUTPUT_DIR, 'sounds.csv'), index=False)
+
+def _read_downloaded_messages(game='words-in-transition'):
+    messages = pandas.read_json(Path(DOWNLOAD_DIR, 'grunt.Message.json'))
+
+    # unfold django model fields
+    field_names = messages.iloc[0].fields.keys()
+    for field in field_names:
+        messages[field] = messages.fields.apply(lambda x: x[field])
+    del messages['fields']
+
+    messages.rename(columns={'pk': 'message_id'}, inplace=True)
+
+    path_data = messages.audio.str.split('/')
+    messages['game'] = path_data.str.get(0)
+    messages['category'] = path_data.str.get(1)
+
+    messages = messages.ix[messages.game == game]
+    del messages['game']
+
+    return messages
 
 
-def _extract_category(path):
-    game, category, filename = path.split('/')
-
-
-def collapse_branches(branches):
+def _collapse_branches(branches):
     all_branches = sorted(branches.values(), key=len, reverse=True)
 
     def remove_sub_branch(branch):
@@ -134,3 +144,23 @@ def collapse_branches(branches):
         remove_sub_branch(branch)
 
     return all_branches
+
+
+def _update_audio_filenames(messages):
+    messages['audio'] = _new_audio_filenames(messages.message_id)
+
+
+def _new_audio_filenames(message_ids):
+    return message_ids.apply(lambda x: Path(SOUNDS_DIR, '{}.wav'.format(x)))
+
+
+def _unpack_and_cleanup_zip():
+    # Unpack and cleanup zip
+    run('unzip -o {}/words-in-transition.zip'.format(DOWNLOAD_DIR))
+    messages = _read_downloaded_messages()[['message_id', 'audio']]
+    nginx_media_root = 'webapps/telephone/media'
+    messages['src'] = messages.audio.apply(lambda x: Path(nginx_media_root, x))
+    messages['dst'] = _new_audio_filenames(messages.message_id)
+    for message in messages.itertuples():
+        Path(message.src).move(message.dst)
+    run('rm -r webapps')  # remove zip dir
