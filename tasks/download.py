@@ -4,16 +4,7 @@ import boto3
 from unipath import Path
 import pandas
 
-BUCKET_NAME = 'words-in-transition'
-ALL_FILES = ['words-in-transition.zip',
-             'grunt.Message.json']
-DOWNLOAD_DIR = Path('downloads')
-DATA_DIR = Path('data')
-SOUNDS_DIR = Path(DATA_DIR, 'sounds')
-
-for expected_dir in [DOWNLOAD_DIR, DATA_DIR, SOUNDS_DIR]:
-    if not expected_dir.isdir():
-        expected_dir.mkdir()
+from .settings import *
 
 @task(
     help=dict(
@@ -23,9 +14,8 @@ for expected_dir in [DOWNLOAD_DIR, DATA_DIR, SOUNDS_DIR]:
         overwrite="Overwrite existing files? Default is false.",
     ),
 )
-
 def download(ctx, filename=None, profile=None, overwrite=False):
-    """Download data from the internet."""
+    """Download the data."""
     files = _determine_files_to_download(filename, overwrite)
 
     if profile:
