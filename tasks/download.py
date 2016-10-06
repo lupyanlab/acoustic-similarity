@@ -29,8 +29,8 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         bucket.download_file(src, dst)
 
     _format_messages()
-    if overwrite:
-        _unpack_zip()
+    if 'words-in-transition.zip' in files and overwrite:
+        _unpack_and_cleanup_zip()
 
 
 def _determine_files_to_download(filename, overwrite):
@@ -50,12 +50,22 @@ def _format_messages():
                       'generation', 'audio']
 
     messages = _read_downloaded_messages()
-    _label_branches(messages)
-    _label_seeds(messages)
+    _label_branch_id_list(messages)
+    _label_seed_id(messages)
     _update_audio_filenames(messages)
 
     messages = messages[output_columns]
     messages.to_csv(Path(DATA_DIR, 'sounds.csv'), index=False)
+
+
+def _label_branch_id_list(messages):
+    labeled_branches = _label_branches(messages)
+
+    def find_all_branches(message_id):
+        is_in = labeled_branches.message_list.apply(lambda x: message_id in x)
+        return labeled_branches.ix[is_in, 'branch_id'].tolist()
+
+    messages['branch_id_list'] = messages.message_id.apply(find_all_branches)
 
 
 def _label_branches(messages):
@@ -76,15 +86,10 @@ def _label_branches(messages):
     unique_branches = _collapse_branches(branches)
     labeled_branches = pandas.DataFrame({'message_list': unique_branches})
     labeled_branches['branch_id'] = range(len(labeled_branches))
-
-    def find_all_branches(message_id):
-        is_in = labeled_branches.message_list.apply(lambda x: message_id in x)
-        return labeled_branches.ix[is_in, 'branch_id'].tolist()
-
-    messages['branch_id_list'] = messages.message_id.apply(find_all_branches)
+    return labeled_branches
 
 
-def _label_seeds(messages):
+def _label_seed_id(messages):
 
     def find_seed_id(message):
         message_data = messages.ix[messages.message_id == message].squeeze()
