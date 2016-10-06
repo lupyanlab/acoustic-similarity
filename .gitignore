@@ -3,3 +3,6 @@ __pycache__/
 
 # testing
 .cache/
+
+# os
+.DS_Store
