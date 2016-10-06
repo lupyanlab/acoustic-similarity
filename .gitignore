@@ -6,3 +6,6 @@ __pycache__/
 
 # os
 .DS_Store
+
+# data
+downloads/
