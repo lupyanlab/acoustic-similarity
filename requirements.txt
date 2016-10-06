@@ -5,3 +5,5 @@ awscli==1.11.1
 boto3==1.4.0
 ipython==5.1.0
 ipython-genutils==0.1.0
+path.py==8.2.1
+pytest==3.0.3
