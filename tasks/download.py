@@ -16,7 +16,7 @@ from .settings import *
 )
 def download(ctx, filename=None, profile=None, overwrite=False):
     """Download the data."""
-    files = _determine_files_to_download(filename, overwrite)
+    files = determine_files_to_download(filename, overwrite)
 
     if profile:
         environ['AWS_PROFILE'] = profile
@@ -28,12 +28,12 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         dst = Path(DOWNLOAD_DIR, filename)
         bucket.download_file(src, dst)
 
-    _format_messages()
+    format_messages()
     if 'words-in-transition.zip' in files and overwrite:
-        _unpack_and_cleanup_zip()
+        unpack_and_cleanup_zip()
 
 
-def _determine_files_to_download(filename, overwrite):
+def determine_files_to_download(filename, overwrite):
     # Create a list of files and remove the ones that exist unless overwriting
     files = [filename] if filename else ALL_FILES
 
@@ -44,22 +44,22 @@ def _determine_files_to_download(filename, overwrite):
     return files
 
 
-def _format_messages():
+def format_messages():
     # Turn Django model data into a csv of messages with all parts labeled
     output_columns = ['message_id', 'category', 'seed_id', 'branch_id_list',
                       'generation', 'audio']
 
-    messages = _read_downloaded_messages()
-    _label_branch_id_list(messages)
-    _label_seed_id(messages)
-    _update_audio_filenames(messages)
+    messages = read_downloaded_messages()
+    label_branch_id_list(messages)
+    label_seed_id(messages)
+    update_audio_filenames(messages)
 
     messages = messages[output_columns]
     messages.to_csv(Path(DATA_DIR, 'sounds.csv'), index=False)
 
 
-def _label_branch_id_list(messages):
-    labeled_branches = _label_branches(messages)
+def label_branch_id_list(messages):
+    labeled_branches = label_branches(messages)
 
     def find_all_branches(message_id):
         is_in = labeled_branches.message_list.apply(lambda x: message_id in x)
@@ -68,7 +68,7 @@ def _label_branch_id_list(messages):
     messages['branch_id_list'] = messages.message_id.apply(find_all_branches)
 
 
-def _label_branches(messages):
+def label_branches(messages):
 
     def find_messages_on_branch(message, found):
         message_data = messages.ix[messages.message_id == message].squeeze()
@@ -83,13 +83,13 @@ def _label_branches(messages):
     for message in messages.message_id:
         branches[message] = find_messages_on_branch(message, [])
 
-    unique_branches = _collapse_branches(branches)
+    unique_branches = collapse_branches(branches)
     labeled_branches = pandas.DataFrame({'message_list': unique_branches})
     labeled_branches['branch_id'] = range(len(labeled_branches))
     return labeled_branches
 
 
-def _label_seed_id(messages):
+def label_seed_id(messages):
 
     def find_seed_id(message):
         message_data = messages.ix[messages.message_id == message].squeeze()
@@ -102,7 +102,7 @@ def _label_seed_id(messages):
     messages['seed_id'] = messages.message_id.apply(find_seed_id).astype(int)
 
 
-def _read_downloaded_messages(game='words-in-transition'):
+def read_downloaded_messages(game='words-in-transition'):
     messages = pandas.read_json(Path(DOWNLOAD_DIR, 'grunt.Message.json'))
 
     # unfold django model fields
@@ -123,7 +123,7 @@ def _read_downloaded_messages(game='words-in-transition'):
     return messages
 
 
-def _collapse_branches(branches):
+def collapse_branches(branches):
     all_branches = sorted(branches.values(), key=len, reverse=True)
 
     def remove_sub_branch(branch):
@@ -141,21 +141,21 @@ def _collapse_branches(branches):
     return all_branches
 
 
-def _update_audio_filenames(messages):
-    messages['audio'] = _new_audio_filenames(messages.message_id)
+def update_audio_filenames(messages):
+    messages['audio'] = new_audio_filenames(messages.message_id)
 
 
-def _new_audio_filenames(message_ids):
+def new_audio_filenames(message_ids):
     return message_ids.apply(lambda x: Path(SOUNDS_DIR, '{}.wav'.format(x)))
 
 
-def _unpack_and_cleanup_zip():
+def unpack_and_cleanup_zip():
     # Unpack and cleanup zip
     run('unzip -o {}/words-in-transition.zip'.format(DOWNLOAD_DIR))
-    messages = _read_downloaded_messages()[['message_id', 'audio']]
+    messages = read_downloaded_messages()[['message_id', 'audio']]
     nginx_media_root = 'webapps/telephone/media'
     messages['src'] = messages.audio.apply(lambda x: Path(nginx_media_root, x))
-    messages['dst'] = _new_audio_filenames(messages.message_id)
+    messages['dst'] = new_audio_filenames(messages.message_id)
     for message in messages.itertuples():
         Path(message.src).move(message.dst)
     run('rm -r webapps')  # remove zip dir

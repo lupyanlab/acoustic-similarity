@@ -1,16 +1,16 @@
 from invoke import task
 import pandas
 
-from .download import (_read_downloaded_messages, _update_audio_filenames,
-                       _label_branches)
+from .download import (read_downloaded_messages, update_audio_filenames,
+                       label_branches)
 from .settings import *
 
 @task
 def compare(ctx):
     """Compare acoustic similarity."""
-    messages = _read_downloaded_messages()
-    _update_audio_filenames(messages)
-    branches = _label_branches(messages)
+    messages = read_downloaded_messages()
+    update_audio_filenames(messages)
+    branches = label_branches(messages)
     expanded = []
     for branch in branches.itertuples():
         expanded.append(_expand_message_list(branch))
@@ -22,7 +22,7 @@ def compare(ctx):
     acoustic_similarities.to_csv(Path(DATA_DIR, 'similarities.csv'), index=False)
 
 
-def _expand_message_list(branch):
+def expand_message_list(branch):
     expanded = pandas.DataFrame(dict(
         message_id=branch.message_list,
         branch_id=branch.branch_id
@@ -30,11 +30,11 @@ def _expand_message_list(branch):
     return expanded
 
 
-def _acoustic_similarity_chain(sounds):
-    mapping = _create_mapping_from_chain(sounds.audio.tolist())
+def acoustic_similarity_chain(sounds):
+    mapping = create_mapping_from_chain(sounds.audio.tolist())
     return acousticsim.main.acoustic_similarity_mapping(mapping)
 
 
-def _create_mapping_from_chain(sounds):
+def create_mapping_from_chain(sounds):
     for i in range(len(sounds) - 1):
         yield (sounds[i], sounds[i+1])
