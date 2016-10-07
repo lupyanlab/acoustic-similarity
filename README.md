@@ -2,49 +2,53 @@
 
 ## Quickstart
 
-```bash
-git clone https://github.com/lupyanlab/acoustic-similarity.git && cd acoustic-similarity
-conda create -n acoustic
-source activate acoustic
-conda install numpy scipy matplotlib
-pip install -r requirements.txt
-aws configure  # prompts for AWS Access Key Id and Secret Access Key
-invoke --list  # list all available tasks
-inv download   # run invoke task `download`
-```
+    git clone https://github.com/lupyanlab/acoustic-similarity.git
+    cd acoustic-similarity
+    invoke --list        # list available tasks
+    inv download compare # run invoke tasks
 
 ## Setup
 
 After cloning the repo, create an isolated virtualenv for installing the
-necessary packages. The acousticsim package has some heavy dependencies.
-Best thing to do is create a conda environment.
+necessary packages. The `acousticsim` package has some heavy dependencies.
+Best thing to do is create a `conda` environment.
 
-```bash
-conda create -n acoustic
-source activate acoustic              # activate the new environment
-conda install numpy scipy matplotlib  # install the hard stuff
-pip install -r requirements.txt       # install the easy stuff
-```
+    conda create -n acoustic
+    source activate acoustic              # activate the new environment
+    conda install numpy scipy matplotlib  # install the hard stuff
+    pip install -r requirements.txt       # install the easy stuff
 
 ## Downloading data from S3
 
 Once everything is installed, you need to configure the AWS
 Command Line Tools so that you can get the data.
 
-```bash
-aws configure
-```
+    aws configure
 
 Then you can download the data as an invoke task.
 
-```bash
-inv download
-```
+    inv download
 
 If you have multiple AWS profiles, you can name the one you want to use
 in the configure step as well as the download step.
 
-```bash
-aws --profile=myprofile configure
-inv download --profile=myprofile
-```
+    aws --profile=myprofile configure
+    inv download --profile=myprofile
+
+## Comparing sounds with acousticsim
+
+The invoke task `compare` is for using acousticsim to compare two sounds.
+The arguments x and y can be specified to test out individual comparisons.
+
+    inv compare -x sound1.wav -y sound2.wav
+
+Comparisons can also happen from specific structures within the telephone
+game data. Here's how to calculate linear similarity along all branches.
+
+    inv compare --type linear
+
+The results are saved as "data/{type}.csv", so the results from the linear
+comparison are "data/linear.csv". If no type is specified, all types will
+be calculated.
+
+    inv compare

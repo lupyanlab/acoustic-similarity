@@ -8,20 +8,23 @@ from .download import (read_downloaded_messages, update_audio_filenames,
 from .settings import *
 
 
-@task(help=dict(x=("Path to first wav file to compare. Optional. "
+@task(help=dict(type=("Type of comparison. Right now only option is 'linear'. "
+                      "If no type is given, all types are compared."),
+                x=("Path to first wav file to compare. Optional."
                    "If specified, arg y is required."),
                 y="Path to second wav file. Optional."))
-def compare(ctx, x=None, y=None):
+def compare(ctx, type='linear', x=None, y=None):
     """Compare acoustic similarity."""
-    output = Path(DATA_DIR, 'similarities.csv')
-
     if x and y:
         edges = create_single_edge(x, y)
         output = sys.stdout
     elif x or y:
         raise AssertionError('need both -x and -y')
-    else:
+    elif type == 'linear':
         edges = get_linear_edges()
+        output = Path(DATA_DIR, 'linear.csv')
+    else:
+        raise NotImplementedError('type == {}'.format(type))
 
     similarities = calculate_similarities(edges)
     similarities.to_csv(output, index=False)
