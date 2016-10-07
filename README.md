@@ -3,10 +3,10 @@
 ## Quickstart
 
 ```bash
-git clone https://github.com/lupyanlab/acoustic-similarity.git
-cd acoustic-similarity
-virtualenv --python=python3 ~/.venvs/acoustic
-source ~/.venvs/acoustic
+git clone https://github.com/lupyanlab/acoustic-similarity.git && cd acoustic-similarity
+conda create -n acoustic
+source activate acoustic
+conda install numpy scipy matplotlib
 pip install -r requirements.txt
 aws configure  # prompts for AWS Access Key Id and Secret Access Key
 invoke --list  # list all available tasks
@@ -16,20 +16,14 @@ inv download   # run invoke task `download`
 ## Setup
 
 After cloning the repo, create an isolated virtualenv for installing the
-necessary packages. By convention I store my virtualenvs in `~/.venvs`.
+necessary packages. The acousticsim package has some heavy dependencies.
+Best thing to do is create a conda environment.
 
 ```bash
-virtualenv --python=python3 ~/.venvs/acoustic
-source ~/.venvs/acoustic
-```
-
-With the virtualenv activated, now install the necessary packages.
-Installing numpy and scipy is always scary. Do these first, and then
-install the rest of the requirements.
-
-```bash
-pip install numpy scipy  # make sure these work first
-pip install -r requirements.txt
+conda create -n acoustic
+source activate acoustic              # activate the new environment
+conda install numpy scipy matplotlib  # install the hard stuff
+pip install -r requirements.txt       # install the easy stuff
 ```
 
 ## Downloading data from S3

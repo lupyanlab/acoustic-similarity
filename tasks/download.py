@@ -6,14 +6,12 @@ import pandas
 
 from .settings import *
 
-@task(
-    help=dict(
-        filename=("The name of the file to download. Defaults to "
-                  "downloading all relevant files."),
-        profile="The name of the AWS profile to use. Optional.",
-        overwrite="Overwrite existing files? Default is false.",
-    ),
-)
+@task(help=dict(
+    filename=("The name of the file to download. Defaults to "
+              "downloading all relevant files."),
+    profile="The name of the AWS profile to use. Optional.",
+    overwrite="Overwrite existing files? Default is false.",
+))
 def download(ctx, filename=None, profile=None, overwrite=False):
     """Download the data."""
     files = determine_files_to_download(filename, overwrite)
@@ -146,7 +144,9 @@ def update_audio_filenames(messages):
 
 
 def new_audio_filenames(message_ids):
-    return message_ids.apply(lambda x: Path(SOUNDS_DIR, '{}.wav'.format(x)))
+    return message_ids.apply(
+        lambda x: Path(SOUNDS_DIR, '{}.wav'.format(x)).absolute()
+    ).astype(str)
 
 
 def unpack_and_cleanup_zip():
