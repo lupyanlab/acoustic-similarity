@@ -88,7 +88,6 @@ def calculate_similarities(edges):
     # whereas the sound_x, sound_y of the input are full paths.
     # Here I'm normalizing sound_x and sound_y to both be type message_id
     # before merging the scores back with the original edges.
-    message_id_from_wav = lambda x: int(Path(x).stem)
     edges['sound_x'] = edges.sound_x.apply(message_id_from_wav)
     edges['sound_y'] = edges.sound_y.apply(message_id_from_wav)
     scored_edges['sound_x'] = scored_edges.sound_x.apply(message_id_from_wav)
@@ -96,3 +95,11 @@ def calculate_similarities(edges):
     labeled = edges.merge(scored_edges)
 
     return labeled
+
+
+def message_id_from_wav(x):
+    name = Path(x).stem
+    try:
+        return int(name)
+    except ValueError:
+        return name
