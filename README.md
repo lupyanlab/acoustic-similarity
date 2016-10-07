@@ -1,5 +1,9 @@
 # Calculate acoustic similarity for telephone game
 
+How does the fidelity of verbal imitation change over generations of repetition?
+
+![](/definitions.png)
+
 ## Quickstart
 
     git clone https://github.com/lupyanlab/acoustic-similarity.git
