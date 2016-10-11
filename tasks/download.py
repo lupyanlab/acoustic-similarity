@@ -3,6 +3,7 @@ from invoke import task, run
 import boto3
 from unipath import Path
 import pandas
+import pydub
 
 from .settings import *
 
@@ -26,9 +27,9 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         dst = Path(DOWNLOAD_DIR, filename)
         bucket.download_file(src, dst)
 
-    format_messages()
-    if 'words-in-transition.zip' in files and overwrite:
-        unpack_and_cleanup_zip()
+    #format_messages()
+    #if 'words-in-transition.zip' in files and overwrite:
+    unpack_and_cleanup_zip()
 
 
 def determine_files_to_download(filename, overwrite):
@@ -152,10 +153,25 @@ def new_audio_filenames(message_ids):
 def unpack_and_cleanup_zip():
     # Unpack and cleanup zip
     run('unzip -o {}/words-in-transition.zip'.format(DOWNLOAD_DIR))
-    messages = read_downloaded_messages()[['message_id', 'audio']]
+    messages = read_downloaded_messages()
     nginx_media_root = 'webapps/telephone/media'
     messages['src'] = messages.audio.apply(lambda x: Path(nginx_media_root, x))
     messages['dst'] = new_audio_filenames(messages.message_id)
     for message in messages.itertuples():
-        Path(message.src).move(message.dst)
+        try:
+            audio = pydub.AudioSegment.from_wav(message.src)
+        except Exception as e:
+            try:
+                audio = pydub.AudioSegment.from_mp3(message.src)
+            except Exception as e:
+                raise e
+        start_at = getattr_null(message, 'start_at', 0)
+        end_at = getattr_null(message, 'end_at', audio.duration_seconds)
+        trimmed = audio[start_at*1000:end_at*1000]  # pydub does things in msec
+        trimmed.export(message.dst, format='wav')
     run('rm -r webapps')  # remove zip dir
+
+
+def getattr_null(obj, name, default):
+    result = getattr(obj, name)
+    return result if not pandas.isnull(result) else default
