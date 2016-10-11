@@ -31,6 +31,7 @@ def compare(ctx, type='linear', x=None, y=None):
 
 
 def create_single_edge(x, y):
+    x, y = find_sound(x), find_sound(y)
     return pandas.DataFrame(dict(sound_x=x, sound_y=y), index=[0])
 
 
@@ -103,3 +104,11 @@ def message_id_from_wav(x):
         return int(name)
     except ValueError:
         return name
+
+
+def find_sound(x):
+    if Path(x).exists():
+        return x
+    else:
+        shortname = '{sounds_dir}/{x}.wav'
+        return shortname.format(sounds_dir=SOUNDS_DIR, x=x)
