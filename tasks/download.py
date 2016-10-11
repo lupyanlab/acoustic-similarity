@@ -27,9 +27,9 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         dst = Path(DOWNLOAD_DIR, filename)
         bucket.download_file(src, dst)
 
-    #format_messages()
-    #if 'words-in-transition.zip' in files and overwrite:
-    unpack_and_cleanup_zip()
+    format_messages()
+    if 'words-in-transition.zip' in files and overwrite:
+        unpack_and_cleanup_zip()
 
 
 def determine_files_to_download(filename, overwrite):
