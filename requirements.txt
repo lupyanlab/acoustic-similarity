@@ -10,3 +10,4 @@ ipython-genutils==0.1.0
 Unipath==1.1
 pytest==3.0.3
 pydub==0.16.5
+-e git://github.com/PhonologicalCorpusTools/CorpusTools.git@75b5545642e97230b9a057125244daa25ac38bb1#egg=corpustools
