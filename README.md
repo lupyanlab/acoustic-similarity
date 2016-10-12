@@ -8,8 +8,8 @@ How does the fidelity of verbal imitation change over generations of repetition?
 
     git clone https://github.com/lupyanlab/acoustic-similarity.git
     cd acoustic-similarity
-    invoke --list        # list available tasks
-    inv download compare # run invoke tasks
+    invoke --list               # list available tasks
+    inv download compare_sounds # run invoke tasks
 
 ## Setup
 
@@ -44,15 +44,21 @@ in the configure step as well as the download step.
 The invoke task `compare` is for using acousticsim to compare two sounds.
 The arguments x and y can be specified to test out individual comparisons.
 
-    inv compare -x sound1.wav -y sound2.wav
+    inv compare_sounds -x path/to/sound1.wav -y path/to/sound2.wav
+
+If you are comparing sounds that were downloaded via the `download` invoke task (i.e., sounds that are in the "data/sounds" directory and named with unique integer ids, like "data/sounds/100.wav"), then you can just specify the ids to compare.
+
+    inv compare_sounds -x 34 -y 101
 
 Comparisons can also happen from specific structures within the telephone
 game data. Here's how to calculate linear similarity along all branches.
 
-    inv compare --type linear
+    inv compare_sounds --type linear
 
 The results are saved as "data/{type}.csv", so the results from the linear
 comparison are "data/linear.csv". If no type is specified, all types will
 be calculated.
 
-    inv compare
+    inv compare_sounds
+
+## Comparing words with Phonological Corpus Tools

@@ -13,8 +13,8 @@ from .settings import *
                 x=("Path to first wav file to compare. Optional."
                    "If specified, arg y is required."),
                 y="Path to second wav file. Optional."))
-def compare(ctx, type='linear', x=None, y=None):
-    """Compare acoustic similarity."""
+def compare_sounds(ctx, type='linear', x=None, y=None):
+    """Compute acoustic similarity between .wav files."""
     if x and y:
         edges = create_single_edge(x, y)
         output = sys.stdout

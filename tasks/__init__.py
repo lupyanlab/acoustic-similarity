@@ -2,4 +2,4 @@ from invoke import task, run, Collection
 import acousticsim
 
 from .download import download
-from .compare import compare
+from .compare_sounds import compare_sounds
