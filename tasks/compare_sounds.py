@@ -3,8 +3,7 @@ from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
-from .download import (read_downloaded_messages, update_audio_filenames,
-                       label_branches)
+from .data import get_linear_edges
 from .settings import *
 
 
@@ -33,47 +32,6 @@ def compare_sounds(ctx, type='linear', x=None, y=None):
 def create_single_edge(x, y):
     x, y = find_sound(x), find_sound(y)
     return pandas.DataFrame(dict(sound_x=x, sound_y=y), index=[0])
-
-
-def get_linear_edges(branches=None):
-    if branches is None:
-        branches = get_messages_by_branch()
-        branches = branches.ix[branches.generation > 0]
-
-    def _get_linear_edges(branch):
-        sounds = branch.audio.tolist()
-        edges = []
-        for i in range(len(sounds) - 1):
-            edges.append((sounds[i], sounds[i+1]))
-        return pandas.DataFrame.from_records(edges,
-                                             columns=['sound_x', 'sound_y'])
-
-    if 'branch_id' in branches:
-        edges = branches.groupby('branch_id').apply(_get_linear_edges)
-        edges = edges.reset_index(level=0).reset_index(drop=True)
-    else:
-        edges = _get_linear_edges(branches)
-    return edges
-
-
-def get_messages_by_branch():
-    messages = read_downloaded_messages()
-    update_audio_filenames(messages)
-    branches = label_branches(messages)
-    expanded = [expand_message_list(branch) for branch in branches.itertuples()]
-    labeled = (pandas.concat(expanded, ignore_index=True)
-                     .merge(messages))
-    labeled = (labeled.sort_values(['branch_id', 'generation'])
-                      .reset_index(drop=True))
-    return labeled
-
-
-def expand_message_list(branch):
-    expanded = pandas.DataFrame(dict(
-        message_id=branch.message_list,
-        branch_id=branch.branch_id
-    ))
-    return expanded
 
 
 def calculate_similarities(edges):
