@@ -1,13 +1,12 @@
 from psychopy import visual, core, event, sound, logging
 
+
 class SimilarityJudgments(object):
     """Judge the similarity between two sounds.
 
-    On each trial, two buttons are presented on the screen.
-    Clicking on these buttons playes one of the sounds.
-    A response scale is presented along the bottom of
-    the screen. Players rate the two sounds on a 7-point
-    scale.
+    On each trial, two buttons are presented on the screen. Clicking on these
+    buttons playes one of the sounds. A response scale is presented along the
+    bottom of the screen. Players rate the two sounds on a 7-point scale.
 
     Pressing 'q' during a trial causes the experiment to quit.
     """
