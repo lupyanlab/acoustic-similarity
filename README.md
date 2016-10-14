@@ -62,3 +62,5 @@ be calculated.
     inv compare_sounds
 
 ## Comparing words with Phonological Corpus Tools
+
+## Getting subjective judgments of similarity

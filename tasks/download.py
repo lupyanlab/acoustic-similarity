@@ -28,7 +28,7 @@ def download(ctx, filename=None, profile=None, overwrite=False):
         bucket.download_file(src, dst)
 
     format_messages()
-    if 'words-in-transition.zip' in files and overwrite:
+    if 'words-in-transition.zip' in files:
         unpack_and_cleanup_zip()
 
 
