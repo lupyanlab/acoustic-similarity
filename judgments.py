@@ -1,5 +1,7 @@
 from psychopy import visual, core, event, sound, logging
 
+from tasks.data import get_linear_edges
+
 class SimilarityJudgments(object):
     """Judge the similarity between two sounds.
 
@@ -58,7 +60,9 @@ def get_player_info():
 
 
 def get_edges_to_judge():
-    return [('1.wav', '2.wav'), ]
+    edges = get_linear_edges()
+    unique_edges = edges[['sound_x', 'sound_y']].drop_duplicates()
+    return unique_edges
 
 
 if __name__ == '__main__':
