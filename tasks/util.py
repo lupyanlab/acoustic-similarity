@@ -95,7 +95,7 @@ def update_audio_filenames(messages):
     messages['audio'] = new_audio_filenames(messages.message_id)
 
 
-def new_audio_filenames(message_ids):
+def new_audio_filenames(message_ids, absolute=True):
     return message_ids.apply(
         lambda x: Path(SOUNDS_DIR, '{}.wav'.format(x)).absolute()
     ).astype(str)

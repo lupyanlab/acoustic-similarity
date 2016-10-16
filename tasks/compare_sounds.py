@@ -3,7 +3,7 @@ from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
-from .data import get_linear_edges
+from .util import get_linear_edges
 from .settings import *
 
 

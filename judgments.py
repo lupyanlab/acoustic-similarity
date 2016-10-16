@@ -3,7 +3,7 @@ from datetime import datetime
 from psychopy import visual, core, event, sound, logging
 from unipath import Path
 
-from tasks.data import get_linear_edges
+from tasks.util import get_linear_edges
 from tasks.settings import *
 
 DATA_DIR = Path(DATA_DIR, 'judgments')
@@ -13,11 +13,11 @@ DATA_FILE = Path(DATA_DIR, '{name}.csv')
 
 
 class SimilarityJudgments(object):
-    """Judge the similarity between two sounds.
+    """Collect similarity judgments comparing two sounds.
 
     On each trial, two buttons are presented on the screen. Clicking on these
-    buttons playes one of the sounds. A response scale is presented along the
-    bottom of the screen. Players rate the two sounds on a 7-point scale.
+    buttons plays one of the sounds. A response scale is presented along the
+    bottom of the screen. Players rate the sounds on a 7-point scale.
 
     Pressing 'q' during a trial causes the experiment to quit.
 
@@ -27,11 +27,13 @@ class SimilarityJudgments(object):
     KEYBOARD = dict(q='quit')
     KEYBOARD.update({str(i): i for i in range(1, 8)})
     BUTTON_SIZE = 0.5
-    DATA_COLS = 'player datetime sound_x sound_y rating'
+    DATA_COLS = 'name datetime sound_x sound_y rating'.split()
 
-    def __init__(self, player):
+    def __init__(self, player, overwrite=False):
         self.player = player
-        self.data_file = open(DATA_FILE.format(**self.player), 'w')
+        self.player['datetime'] = datetime.now()
+        fmode = 'w' if overwrite else 'a'
+        self.data_file = open(DATA_FILE.format(**self.player), fmode)
 
         self.win = visual.Window()
         left, right = calculate_button_positions()
@@ -39,8 +41,9 @@ class SimilarityJudgments(object):
                              width=self.BUTTON_SIZE, height=self.BUTTON_SIZE)
         self.sound_x_button = visual.Rect(pos=left, **button_kwargs)
         self.sound_y_button = visual.Rect(pos=right, **button_kwargs)
-        self.edges = get_edges_to_judge()
+        self.edges = get_edges_to_judge(seed=int(self.player['datetime']))
         self.mouse = event.Mouse(win=self.win)
+        self.sound = {}
 
     def run(self):
         for edge in self.edges:
@@ -62,7 +65,7 @@ class SimilarityJudgments(object):
         try:
             self.load_sounds(sound_x_name, sound_y_name)
         except BadRecording as e:
-            # Record that this trial was bad in the data before passing up.
+            # Record that this trial was bad in the data before re-raising.
             self.write_trial(trial)
             raise e
         self.show_trial()
@@ -76,12 +79,18 @@ class SimilarityJudgments(object):
             core.wait(0.1)
 
     def load_sounds(self, sound_x_name, sound_y_name):
-        obj_pairs = zip(['sound_x', 'sound_y'], [sound_x_name, sound_y_name])
-        for (name, obj) in name_obj_pairs:
-            # ex: sets self.sound_x = sound.Sound(sound_x_name)
-            setattr(self, obj, sound.Sound(name))
-            if getattr(self, obj).getDuration() < 1.0:
+        """Load the sounds to compare on this trial.
+
+        e.g. sets `self.sound_x = sound.Sound(sound_x_name)` but does it
+        intelligently, only creating the sounds as necessary.
+        """
+        obj_name_pairs = zip(['sound_x', 'sound_y'],
+                             [sound_x_name, sound_y_name])
+        for (obj, name) in obj_name_pairs:
+            sound = self.sounds.setdefault(name, sound.Sound(name))
+            if sound.getDuration() < 1.0:
                 raise BadRecording(name)
+            setattr(self, obj, sound)
 
     def show_screen(self):
         self.sound_x_button.draw()
@@ -98,7 +107,7 @@ class SimilarityJudgments(object):
             elif self.sound_y_button.contains(pos):
                 self.sound_y.play()
             else:
-                logging.info('Mouse press outside of buttons')
+                logging.info('Mouse pressed outside of buttons')
 
     def check_keyboard(self):
         response = dict(similarity='')
@@ -114,24 +123,25 @@ class SimilarityJudgments(object):
 
         return response
 
-
-    def write_trial(self, trial, response):
+    def write_trial(self, trial, response=None):
         data = self.player
         data.update(trial)
-        data.update(response)
-
-
-
+        if response:
+            data.update(response)
+        row = [data.get(name, '') for name in self.DATA_COLS]
+        self.data_file.write(','.join(map(str, row))+'\n')
 
 
 def get_player_info():
     return dict(name='pierce')
 
 
-def get_edges_to_judge():
+def get_edges_to_judge(seed=None):
     edges = get_linear_edges()
-    unique_edges = edges[['sound_x', 'sound_y']].drop_duplicates()
-    return unique_edges.iloc[:1].itertuples()
+    unique = edges[['sound_x', 'sound_y']].drop_duplicates()
+    shuffled = (unique.sample(len(unique), random_state=seed)
+                      .reset_index(drop=True))
+    return shuffled.iloc[:1].itertuples()
 
 
 def calculate_button_positions():
@@ -151,5 +161,5 @@ class BadRecording(Exception):
 if __name__ == '__main__':
     logging.console.setLevel(logging.INFO)
     player = get_player_info()
-    judgments = SimilarityJudgments(player)
+    judgments = SimilarityJudgments(player, overwrite=True)
     judgments.run()
