@@ -1,8 +1,10 @@
+#!/usr/bin/env python
 from datetime import datetime
 
 from psychopy import visual, core, event, sound, logging
 from unipath import Path
 import pandas
+import numpy
 
 from tasks.util import get_linear_edges
 from tasks.settings import *
@@ -44,33 +46,42 @@ class SimilarityJudgments(object):
                              width=self.BUTTON_SIZE, height=self.BUTTON_SIZE)
         self.sound_x_button = visual.Rect(pos=left, **button_kwargs)
         self.sound_y_button = visual.Rect(pos=right, **button_kwargs)
-        self.edges = get_edges_to_judge(seed, completed_csv=fname)
+        self.trials = Trials(seed=seed, completed_csv=fname)
         self.mouse = event.Mouse(win=self.win)
         self.sounds = {}
 
     def run(self):
-        for edge in self.edges:
+        for block in self.trials:
             try:
-                self.run_trial(edge.sound_x, edge.sound_y)
-            except BadRecording as e:
-                logging.warning(e)
-                continue
+                self.run_block(block)
             except QuitExperiment:
                 logging.info("Quitting experiment")
                 break
+            else:
+                logging.info("Finished experiment")
 
-        logging.info("Finishing experiment")
         self.data_file.close()
-        #sound.exit()
-        #core.quit()
+        # sound.exit()
+        # core.quit()
 
-    def run_trial(self, sound_x_name, sound_y_name):
-        trial = dict(sound_x=sound_x_name, sound_y=sound_y_name)
+    def run_block(self, block):
+        for trial in block:
+            try:
+                self.run_trial(trial)
+            except BadRecording as e:
+                logging.warning(e)
+                continue
+
+    def run_trial(self, trial):
+        """
+        Args:
+            trial: namedtuple, e.g., from pandas.DataFrame.itertuples()
+        """
         event.clearEvents()
         self.mouse.clickReset()
 
         try:
-            self.load_sounds(sound_x_name, sound_y_name)
+            self.load_sounds(trial.sound_x, trial.sound_y)
         except BadRecording as e:
             # Record that this trial was bad in the data before re-raising.
             self.write_trial(trial)
@@ -134,7 +145,7 @@ class SimilarityJudgments(object):
 
     def write_trial(self, trial, response=None):
         data = self.player.copy()
-        data.update(trial)
+        data.update(trial._asdict())
         if response:
             logging.info("Writing a response {}".format(response))
             data.update(response)
@@ -142,33 +153,43 @@ class SimilarityJudgments(object):
         self.data_file.write(','.join(map(str, row))+'\n')
 
 
-def get_player_info():
-    return dict(name='pierce')
+class Trials(object):
+    """A list of trials with special methods for iterating by block."""
+    def __init__(self, seed=None, completed_csv=None):
+        random = numpy.random.RandomState(seed)
+        edges = get_linear_edges()
+        unique = edges[['sound_x', 'sound_y']].drop_duplicates()
 
+        try:
+            previous_data = pandas.read_csv(completed_csv)
+        except ValueError, IOError:
+            logging.info('Couldn\'t find any previous data')
+            trials = unique
+        else:
+            completed_edges = edges_to_sets(previous_data)
+            is_unfinished = (pandas.Series(edges_to_sets(unique),
+                                           index=unique.index)
+                                   .apply(lambda x: x not in completed_edges))
+            trials = unique[is_unfinished]
 
-def get_edges_to_judge(seed=None, completed_csv=None):
-    edges = get_linear_edges()
-    unique = edges[['sound_x', 'sound_y']].drop_duplicates()
+        trials.insert(0, 'block_ix', random.choice(range(1,5), len(trials)))
+        trials = (trials.sort_values('block_ix')
+                        .reset_index(drop=True))
+        trials.insert(0, 'trial_ix', range(1, len(trials)+1))
 
-    try:
-        previous_data = pandas.read_csv(completed_csv)
-    except ValueError, IOError:
-        logging.info('Couldn\'t find any previous data')
-        unfinished = unique
-    else:
-        completed_edges = edges_to_sets(previous_data)
-        is_unfinished = (pandas.Series(edges_to_sets(unique),
-                                       index=unique.index)
-                               .apply(lambda x: x not in completed_edges))
-        unfinished = unique[is_unfinished]
+        self._blocks = [block.itertuples()
+                        for _, block in trials.groupby('block_ix')]
 
-    shuffled = (unfinished.sample(len(unique), random_state=seed)
-                          .reset_index(drop=True))
-    return shuffled.iloc[:10].itertuples()
+    def __getitem__(self, block_ix):
+        return self._blocks[block_ix]
 
 
 def edges_to_sets(edges):
     return [{edge.sound_x, edge.sound_y} for edge in edges.itertuples()]
+
+
+def get_player_info():
+    return dict(name='pierce')
 
 
 def calculate_button_positions():
@@ -182,8 +203,10 @@ def calculate_button_positions():
 class QuitExperiment(Exception):
     pass
 
+
 class BadRecording(Exception):
     """The recording is not good enough to obtain similarity judgments from."""
+
 
 if __name__ == '__main__':
     logging.console.setLevel(logging.INFO)
