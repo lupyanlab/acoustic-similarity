@@ -58,7 +58,7 @@ class SimilarityJudgments(object):
                 logging.info("Quitting experiment")
                 break
             else:
-                logging.info("Finished experiment")
+                self.break_screen()
 
         self.data_file.close()
         # sound.exit()
@@ -98,6 +98,9 @@ class SimilarityJudgments(object):
             core.wait(0.1)
 
         logging.info('Finished running trial')
+
+    def break_screen(self):
+        pass
 
     def load_sounds(self, sound_x_name, sound_y_name):
         """Load the sounds to compare on this trial.
