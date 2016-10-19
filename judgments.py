@@ -18,9 +18,9 @@ DATA_FILE = Path(DATA_DIR, '{name}.csv')
 class SimilarityJudgments(object):
     """Collect similarity judgments comparing two sounds.
 
-    On each trial, two buttons are presented on the screen. Clicking on these
-    buttons plays one of the sounds. A response scale is presented along the
-    bottom of the screen. Players rate the sounds on a 7-point scale.
+    On each trial, participants hear two sounds played in sequence. After
+    hearing the second sound, they rate the similarity between the sounds
+    on a 7-point scale.
 
     Pressing 'q' during a trial causes the experiment to quit.
 
@@ -86,18 +86,15 @@ class SimilarityJudgments(object):
             # Record that this trial was bad in the data before re-raising.
             self.write_trial(trial)
             raise e
-        self.show_trial()
 
-        while True:
-            self.check_mouse()
-            response = self.check_keyboard()
-            if response:
-                logging.info('Caught a response')
-                self.write_trial(trial, response)
-                break
-            core.wait(0.1)
-
-        logging.info('Finished running trial')
+        self.sound_x.play()
+        core.wait(self.sound_x.getDuration() + self.DELAY)
+        self.sound_y.play()
+        core.wait(self.sound_y.getDuration())
+        self.show_scale()
+        response = self.check_keyboard()
+        if response:
+            self.write_trial(trial, response)
 
     def break_screen(self):
         pass
@@ -116,26 +113,13 @@ class SimilarityJudgments(object):
                 raise BadRecording(name)
             setattr(self, obj, snd)
 
-    def show_trial(self):
-        self.sound_x_button.draw()
-        self.sound_y_button.draw()
+    def show_scale(self):
+        # draw scale here
         self.win.flip()
-
-    def check_mouse(self):
-        mouse_responses = self.mouse.getPressed()
-
-        if mouse_responses and any(mouse_responses):
-            pos = self.mouse.getPos()
-            if self.sound_x_button.contains(pos):
-                self.sound_x.play()
-            elif self.sound_y_button.contains(pos):
-                self.sound_y.play()
-            else:
-                logging.info('Mouse pressed outside of buttons')
 
     def check_keyboard(self):
         response = None
-        keyboard_responses = event.getKeys(keyList=self.KEYBOARD.keys())
+        keyboard_responses = event.waitKeys(keyList=self.KEYBOARD.keys())
 
         if keyboard_responses:
             key = self.KEYBOARD.get(keyboard_responses[0])
