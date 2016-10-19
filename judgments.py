@@ -33,10 +33,10 @@ class SimilarityJudgments(object):
     DELAY = 0.5  # time between sounds
 
     def __init__(self, player, overwrite=False):
-        self.player = player
-        self.player['datetime'] = datetime.now()
-        seed = self.player['datetime'].toordinal()
-        fname = DATA_FILE.format(**self.player)
+        self.session = player.copy()
+        self.session['datetime'] = datetime.now()
+        seed = self.session['datetime'].toordinal()
+        fname = DATA_FILE.format(**self.session)
         fmode = 'w' if overwrite else 'a'
         self.data_file = open(fname, fmode)
         self.trials = make_trials(seed=seed, completed_csv=fname)
@@ -115,10 +115,6 @@ class SimilarityJudgments(object):
                 raise BadRecording(name)
             setattr(self, obj, snd)
 
-    def show_scale(self):
-        # draw scale here
-        self.win.flip()
-
     def check_keyboard(self):
         keyboard_responses = event.waitKeys(keyList=self.KEYBOARD.keys())
         key = self.KEYBOARD.get(keyboard_responses[0])
@@ -129,7 +125,7 @@ class SimilarityJudgments(object):
         return response
 
     def write_trial(self, trial, response=None):
-        data = self.player.copy()
+        data = self.session.copy()
         data.update(trial._asdict())
         if response:
             logging.info("Writing a response {}".format(response))
@@ -188,6 +184,7 @@ class RatingScale(object):
             rating.draw()
         for label in self._labels:
             label.draw()
+
 
 def get_player_info():
     return dict(name='pierce')
