@@ -31,6 +31,7 @@ class SimilarityJudgments(object):
     KEYBOARD.update({str(i): i for i in range(1, 8)})
     BUTTON_SIZE = 0.5
     DATA_COLS = 'name datetime sound_x sound_y rating'.split()
+    DELAY = 0.5  # time between sounds
 
     def __init__(self, player, overwrite=False):
         self.player = player
@@ -39,14 +40,10 @@ class SimilarityJudgments(object):
         fname = DATA_FILE.format(**self.player)
         fmode = 'w' if overwrite else 'a'
         self.data_file = open(fname, fmode)
+        self.trials = make_trials(seed=seed, completed_csv=fname)
 
-        self.win = visual.Window()
-        left, right = calculate_button_positions()
-        button_kwargs = dict(win=self.win, lineColor='black',
-                             width=self.BUTTON_SIZE, height=self.BUTTON_SIZE)
-        self.sound_x_button = visual.Rect(pos=left, **button_kwargs)
-        self.sound_y_button = visual.Rect(pos=right, **button_kwargs)
-        self.trials = Trials(seed=seed, completed_csv=fname)
+        self.win = visual.Window(units='pix')
+        self.scale = RatingScale(self.win)
         self.mouse = event.Mouse(win=self.win)
         self.sounds = {}
 
@@ -91,7 +88,9 @@ class SimilarityJudgments(object):
         core.wait(self.sound_x.getDuration() + self.DELAY)
         self.sound_y.play()
         core.wait(self.sound_y.getDuration())
-        self.show_scale()
+
+        self.scale.draw()
+        self.win.flip()
         response = self.check_keyboard()
         if response:
             self.write_trial(trial, response)
@@ -118,16 +117,12 @@ class SimilarityJudgments(object):
         self.win.flip()
 
     def check_keyboard(self):
-        response = None
         keyboard_responses = event.waitKeys(keyList=self.KEYBOARD.keys())
-
-        if keyboard_responses:
-            key = self.KEYBOARD.get(keyboard_responses[0])
-            if key == 'quit':
-                logging.info('key press requested experiment quit')
-                raise QuitExperiment
-            response = dict(similarity=key)
-
+        key = self.KEYBOARD.get(keyboard_responses[0])
+        if key == 'quit':
+            logging.info('key press requested experiment quit')
+            raise QuitExperiment
+        response = dict(similarity=key)
         return response
 
     def write_trial(self, trial, response=None):
@@ -140,51 +135,52 @@ class SimilarityJudgments(object):
         self.data_file.write(','.join(map(str, row))+'\n')
 
 
-class Trials(object):
-    """A list of trials with special methods for iterating by block."""
-    def __init__(self, seed=None, completed_csv=None):
-        random = numpy.random.RandomState(seed)
-        edges = get_linear_edges()
-        unique = edges[['sound_x', 'sound_y']].drop_duplicates()
+def make_trials(seed=None, completed_csv=None):
+    random = numpy.random.RandomState(seed)
+    edges = get_linear_edges()
+    unique = edges[['sound_x', 'sound_y']].drop_duplicates()
 
-        try:
-            previous_data = pandas.read_csv(completed_csv)
-        except ValueError, IOError:
-            logging.info('Couldn\'t find any previous data')
-            trials = unique
-        else:
-            completed_edges = edges_to_sets(previous_data)
-            is_unfinished = (pandas.Series(edges_to_sets(unique),
-                                           index=unique.index)
-                                   .apply(lambda x: x not in completed_edges))
-            trials = unique[is_unfinished]
+    try:
+        previous_data = pandas.read_csv(completed_csv)
+    except ValueError, IOError:
+        logging.info('Couldn\'t find any previous data')
+        trials = unique
+    else:
+        completed_edges = edges_to_sets(previous_data)
+        is_unfinished = (pandas.Series(edges_to_sets(unique),
+                                       index=unique.index)
+                               .apply(lambda x: x not in completed_edges))
+        trials = unique[is_unfinished]
 
-        trials.insert(0, 'block_ix', random.choice(range(1,5), len(trials)))
-        trials = (trials.sort_values('block_ix')
-                        .reset_index(drop=True))
-        trials.insert(0, 'trial_ix', range(1, len(trials)+1))
+    trials.insert(0, 'block_ix', random.choice(range(1,5), len(trials)))
+    trials = (trials.sort_values('block_ix')
+                    .reset_index(drop=True))
+    trials.insert(0, 'trial_ix', range(1, len(trials)+1))
 
-        self._blocks = [block.itertuples()
-                        for _, block in trials.groupby('block_ix')]
-
-    def __getitem__(self, block_ix):
-        return self._blocks[block_ix]
+    blocks = [block.itertuples() for _, block in trials.groupby('block_ix')]
+    return blocks
 
 
 def edges_to_sets(edges):
     return [{edge.sound_x, edge.sound_y} for edge in edges.itertuples()]
 
 
+class RatingScale(object):
+    def __init__(self, win, **kwargs):
+        values = range(1, 8)
+        width = 500
+        gutter = width/len(values)
+        x_positions = numpy.array([gutter * i for i in values]) - width/2
+        rating_kwargs = dict(win=win, **kwargs)
+        self._ratings = [visual.TextStim(text=i, pos=(x, 0), **rating_kwargs)
+                         for i, x in zip(values, x_positions)]
+
+    def draw(self):
+        for rating in self._ratings:
+            rating.draw()
+
 def get_player_info():
     return dict(name='pierce')
-
-
-def calculate_button_positions():
-    gutter = 0.5
-    height = 0
-    left = (-gutter, height)
-    right = (gutter, height)
-    return left, right
 
 
 class QuitExperiment(Exception):
