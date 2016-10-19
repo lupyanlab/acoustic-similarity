@@ -28,7 +28,6 @@ class SimilarityJudgments(object):
     will be skipped.
     """
     KEYBOARD = dict(q='quit')
-    KEYBOARD.update({str(i): i for i in range(1, 8)})
     BUTTON_SIZE = 0.5
     DATA_COLS = 'name datetime sound_x sound_y rating'.split()
     DELAY = 0.5  # time between sounds
@@ -44,6 +43,8 @@ class SimilarityJudgments(object):
 
         self.win = visual.Window(units='pix')
         self.scale = RatingScale(self.win)
+        self.KEYBOARD.update({str(i): i for i in self.scale.values})
+
         self.mouse = event.Mouse(win=self.win)
         self.sounds = {}
 
@@ -94,6 +95,8 @@ class SimilarityJudgments(object):
         response = self.check_keyboard()
         if response:
             self.write_trial(trial, response)
+
+        self.win.flip()
 
     def break_screen(self):
         pass
@@ -167,17 +170,24 @@ def edges_to_sets(edges):
 
 class RatingScale(object):
     def __init__(self, win, **kwargs):
-        values = range(1, 8)
+        self.values = range(1, 8)
         width = 500
-        gutter = width/len(values)
-        x_positions = numpy.array([gutter * i for i in values]) - width/2
+        gutter = width/len(self.values)
+        x_positions = numpy.array([gutter * i for i in self.values]) - width/2
         rating_kwargs = dict(win=win, **kwargs)
         self._ratings = [visual.TextStim(text=i, pos=(x, 0), **rating_kwargs)
-                         for i, x in zip(values, x_positions)]
+                         for i, x in zip(self.values, x_positions)]
+        labels = {1: 'Not at all', 7: 'Exact matches'}
+        label_y = -20
+        self._labels = [visual.TextStim(win, text=text,
+                                        pos=(x_positions[x-1], label_y))
+                        for x, text in labels.items()]
 
     def draw(self):
         for rating in self._ratings:
             rating.draw()
+        for label in self._labels:
+            label.draw()
 
 def get_player_info():
     return dict(name='pierce')
