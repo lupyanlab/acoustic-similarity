@@ -53,14 +53,12 @@ class SimilarityJudgments(object):
             try:
                 self.run_block(block)
             except QuitExperiment:
-                logging.info("Quitting experiment")
                 break
             else:
                 self.break_screen()
 
         self.data_file.close()
-        # sound.exit()
-        # core.quit()
+        core.quit()
 
     def run_block(self, block):
         for trial in block:
@@ -93,8 +91,7 @@ class SimilarityJudgments(object):
         self.scale.draw()
         self.win.flip()
         response = self.check_keyboard()
-        if response:
-            self.write_trial(trial, response)
+        self.write_trial(trial, response)
 
         self.win.flip()
 
@@ -119,9 +116,9 @@ class SimilarityJudgments(object):
         keyboard_responses = event.waitKeys(keyList=self.KEYBOARD.keys())
         key = self.KEYBOARD.get(keyboard_responses[0])
         if key == 'quit':
-            logging.info('key press requested experiment quit')
             raise QuitExperiment
         response = dict(similarity=key)
+        self.scale.highlight(key)
         return response
 
     def write_trial(self, trial, response=None):
@@ -166,16 +163,21 @@ def edges_to_sets(edges):
 
 class RatingScale(object):
     def __init__(self, win, **kwargs):
+        self.win = win
         self.values = range(1, 8)
         width = 500
         gutter = width/len(self.values)
         x_positions = numpy.array([gutter * i for i in self.values]) - width/2
-        rating_kwargs = dict(win=win, **kwargs)
+
+        # Create text stim objects for all values of the scale
+        rating_kwargs = dict(win=self.win, **kwargs)
         self._ratings = [visual.TextStim(text=i, pos=(x, 0), **rating_kwargs)
                          for i, x in zip(self.values, x_positions)]
+
+        # Label some of the scale points
         labels = {1: 'Not at all', 7: 'Exact matches'}
         label_y = -20
-        self._labels = [visual.TextStim(win, text=text,
+        self._labels = [visual.TextStim(self.win, text=text,
                                         pos=(x_positions[x-1], label_y))
                         for x, text in labels.items()]
 
@@ -184,6 +186,14 @@ class RatingScale(object):
             rating.draw()
         for label in self._labels:
             label.draw()
+
+    def highlight(self, key):
+        selected = self._ratings[int(key)-1]
+        selected.setColor('green')
+        self.draw()
+        self.win.flip()
+        core.wait(0.5)
+        selected.setColor('white')
 
 
 def get_player_info():
