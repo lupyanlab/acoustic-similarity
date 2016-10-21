@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from datetime import datetime
+import webbrowser
 
 from psychopy import visual, core, event, sound, logging, gui
 from unipath import Path
@@ -31,6 +32,7 @@ class SimilarityJudgments(object):
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
 
     DELAY = 0.5  # time between sounds
+    REPORT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
 
     def __init__(self, player, overwrite=False):
         self.session = player.copy()
@@ -47,7 +49,7 @@ class SimilarityJudgments(object):
         self.trial_blocks = make_trial_blocks(seed=seed, completed_csv=fname)
 
         # Create the trial objects.
-        self.win = visual.Window([1000, 1000], units='pix')
+        self.win = visual.Window(fullscr=True, units='pix')
         self.text_kwargs = dict(win=self.win, font='Consolas',
                                 wrapWidth=self.win.size[0] * 0.8)
         self.scale = RatingScale(self.win, self.text_kwargs)
@@ -87,7 +89,14 @@ class SimilarityJudgments(object):
         core.wait(self.DELAY)
         self.play_and_wait(second)
         self.scale.draw(flip=True)
-        response = self.scale.get_response()
+
+        try:
+            response = self.scale.get_response()
+        except ReportError:
+            response = dict(similarity=-1)
+            self.show_error_report(sound_x=trial.sound_x,
+                                   sound_y=trial.sound_y,
+                                   reversed=trial.reversed)
 
         response.update(**trial._asdict())
         self.write_trial(**response)
@@ -108,6 +117,24 @@ class SimilarityJudgments(object):
         visual.TextStim(BREAK, **self.text_kwargs).draw()
         self.win.flip()
         event.waitKeys(keyList=['space'])
+
+    def show_error_report(self, **prefill_kwargs):
+        prefill_kwargs['name'] = self.session['name']
+
+        self.win.winHandle.minimize()
+        self.win.fullscr = False
+        self.win.flip()
+
+        dlg = gui.Dlg('Return')
+        dlg.show()
+        webbrowser.open(self.REPORT_URL.format(**prefill_kwargs))
+        if not dlg.OK:
+            raise QuitExperiment
+
+        self.win.winHandle.maximize()
+        self.win.fullscr = True
+        self.win.winHandle.activate()
+        self.win.flip()
 
     def get_or_create_sounds(self, *args):
         """Get sounds by name or create them if they don't exist."""
@@ -189,8 +216,9 @@ def determine_imitation_category(audio):
 
 class RatingScale(object):
     QUESTION = "Rate the similarity between the two sounds"
+    ERROR = "If there was an error, press 'e' to report it."
     VALUES = range(1, 8)
-    KEYBOARD = dict(q='quit')
+    KEYBOARD = dict(q='quit', e='error')
     KEYBOARD.update({str(i): i for i in VALUES})
     X_GUTTER = 80
     LABEL_Y = 50
@@ -220,12 +248,17 @@ class RatingScale(object):
         self.title = visual.TextStim(text=self.QUESTION, height=30, bold=True,
                                      pos=(0, self.LABEL_Y), **text_kwargs)
 
+        # Add note about reporting errors
+        self.error = visual.TextStim(text=self.ERROR, height=12,
+                                     pos=(0, -2*self.LABEL_Y), **text_kwargs)
+
     def draw(self, flip=True):
         self.title.draw()
         for rating in self.ratings:
             rating.draw()
         for label in self.labels:
             label.draw()
+        self.error.draw()
 
         if flip:
             self.win.flip()
@@ -235,6 +268,8 @@ class RatingScale(object):
         key = self.KEYBOARD.get(keyboard_responses[0])
         if key == 'quit':
             raise QuitExperiment
+        elif key == 'error':
+            raise ReportError
         self.highlight(key)
         return dict(similarity=key)
 
@@ -259,10 +294,8 @@ def get_player_info():
 class QuitExperiment(Exception):
     pass
 
-
-class BadRecording(Exception):
+class ReportError(Exception):
     pass
-
 
 if __name__ == '__main__':
     logging.console.setLevel(logging.WARNING)
