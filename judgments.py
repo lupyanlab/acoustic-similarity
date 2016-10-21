@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from datetime import datetime
 
-from psychopy import visual, core, event, sound, logging
+from psychopy import visual, core, event, sound, logging, gui
 from unipath import Path
 import pandas
 import numpy
@@ -9,17 +9,22 @@ import numpy
 from tasks.util import *
 from tasks.settings import *
 
+TITLE = "Judge the similarity between two sounds"
+INSTRUCTIONS = """\
+On each trial, you will hear two sounds played in succession. After hearing the second sound, you will be asked to rate the similarity between the two sounds on a 7-point scale.
+
+High numbers on this scale indicate high similarity between the two sounds, with the highest possible rating meaning that the sounds were nearly indistinguishable after a single listen. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as they were the first time you heard them. In contrast, the lowest possible similarity rating would indicate that the sounds were perfectly distinguishable, and would not be likely to be confused.
+
+Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. Press the SPACEBAR to begin. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
+"""
+
+BREAK = "Take a short break. Take the headphones off, stand up, and stretch out. When you are ready to continue, press the SPACEBAR."
+
 
 class SimilarityJudgments(object):
-    """Collect similarity judgments comparing two sounds.
-
-    On each trial, participants hear two sounds played in sequence. After
-    hearing the second sound, they rate the similarity between the sounds
-    on a 7-point scale.
-
-    Pressing 'q' during a trial causes the experiment to quit.
-    """
-    DATA_COLS = 'name datetime block_ix trial_ix sound_x sound_y reversed category similarity'.split()
+    """Collect similarity judgments comparing two sounds."""
+    DATA_COLS = ('name datetime block_ix trial_ix sound_x sound_y '
+                 'reversed category similarity').split()
     DATA_DIR = Path(DATA_DIR, 'judgments')
     if not DATA_DIR.isdir():
         DATA_DIR.mkdir()
@@ -42,8 +47,10 @@ class SimilarityJudgments(object):
         self.trial_blocks = make_trial_blocks(seed=seed, completed_csv=fname)
 
         # Create the trial objects.
-        self.win = visual.Window(units='pix')
-        self.scale = RatingScale(self.win)
+        self.win = visual.Window([1000, 1000], units='pix')
+        self.text_kwargs = dict(win=self.win, font='Consolas',
+                                wrapWidth=self.win.size[0] * 0.8)
+        self.scale = RatingScale(self.win, self.text_kwargs)
         self.sounds = {}
         self.icon = visual.ImageStim(self.win, 'stimuli/speaker_icon.png')
 
@@ -86,10 +93,21 @@ class SimilarityJudgments(object):
         self.write_trial(**response)
 
     def show_instructions(self):
-        pass
+        gap = 80
+        title_y = self.win.size[1]/2 - gap
+        visual.TextStim(text=TITLE, alignVert='top',
+                        pos=[0, title_y], height=30, bold=True,
+                        **self.text_kwargs).draw()
+        visual.TextStim(text=INSTRUCTIONS, alignVert='top', height=20,
+                        pos=[0, title_y-gap],
+                        **self.text_kwargs).draw()
+        self.win.flip()
+        event.waitKeys(keyList=['space'])
 
     def break_screen(self):
-        pass
+        visual.TextStim(BREAK, **self.text_kwargs).draw()
+        self.win.flip()
+        event.waitKeys(keyList=['space'])
 
     def get_or_create_sounds(self, *args):
         """Get sounds by name or create them if they don't exist."""
@@ -169,14 +187,16 @@ def determine_imitation_category(audio):
 
 
 class RatingScale(object):
+    QUESTION = "Rate the similarity between the two sounds"
     VALUES = range(1, 8)
     KEYBOARD = dict(q='quit')
     KEYBOARD.update({str(i): i for i in VALUES})
-    X_GUTTER = 40
+    X_GUTTER = 80
+    LABEL_Y = 50
     FONT_SIZE = 30
     HIGHLIGHT_TIME = 0.5
 
-    def __init__(self, win):
+    def __init__(self, win, text_kwargs):
         self.win = win
 
         x_positions = numpy.array([(i-1) * self.X_GUTTER for i in self.VALUES])
@@ -184,19 +204,23 @@ class RatingScale(object):
         assert x_positions.max() < win.size[0]/2, "some ratings will be hidden"
 
         # Create text stim objects for all values of the scale
-        rating_kwargs = dict(win=self.win, font='Consolas',
-                             height=self.FONT_SIZE)
-        self.ratings = [visual.TextStim(text=i, pos=(x, 0), **rating_kwargs)
+        self.ratings = [visual.TextStim(text=i, pos=(x, 0), height=30,
+                                        **text_kwargs)
                         for i, x in zip(self.VALUES, x_positions)]
 
         # Label some of the scale points
         label_names = {1: 'Not at all', 7: 'Exact matches'}
-        label_y = -20
-        self.labels = [visual.TextStim(self.win, text=text,
-                                       pos=(x_positions[x-1], label_y))
-                        for x, text in label_names.items()]
+        self.labels = [visual.TextStim(text=text,
+                                       pos=(x_positions[x-1], -self.LABEL_Y),
+                                       height=20, **text_kwargs)
+                       for x, text in label_names.items()]
+
+        # Create a title for the question
+        self.title = visual.TextStim(text=self.QUESTION, height=30, bold=True,
+                                     pos=(0, self.LABEL_Y), **text_kwargs)
 
     def draw(self, flip=True):
+        self.title.draw()
         for rating in self.ratings:
             rating.draw()
         for label in self.labels:
@@ -223,7 +247,12 @@ class RatingScale(object):
 
 
 def get_player_info():
-    return dict(name='pierce')
+    info = {'Name': ''}
+    dlg = gui.DlgFromDict(info, title='Similarity Judgments')
+    if not dlg.OK:
+        core.quit()
+    clean = {key.lower(): value for key, value in info.items()}
+    return clean
 
 
 class QuitExperiment(Exception):
