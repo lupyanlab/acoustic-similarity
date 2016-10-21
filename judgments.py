@@ -150,6 +150,7 @@ def make_trial_blocks(seed=None, completed_csv=None):
         previous_data = pandas.read_csv(completed_csv)
         completed_edges = edges_to_sets(previous_data)
     except ValueError, IOError:
+        logging.info('Could not find existing data. Running all trials.')
         trials = unique  # all trials are new
     else:
         is_unfinished = (pandas.Series(edges_to_sets(unique),

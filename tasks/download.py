@@ -1,3 +1,5 @@
+import logging
+
 from os import environ
 from invoke import task, run
 import boto3
@@ -7,14 +9,20 @@ import pydub
 from .util import *
 from .settings import *
 
+logger = logging.getLogger(__name__)
+
 @task(help=dict(
     filename=("The name of the file to download. Defaults to "
               "downloading all relevant files."),
     profile="The name of the AWS profile to use. Optional.",
     overwrite="Overwrite existing files? Default is false.",
+    verbose="Should all info be printed to stdout?",
 ))
-def download(ctx, filename=None, profile=None, overwrite=False):
-    """Download the data."""
+def download(ctx, filename=None, profile=None, overwrite=False, verbose=False):
+    """Download the data from the Telephone app."""
+    if verbose:
+        logger.setLeve(logging.INFO)
+
     files = determine_files_to_download(filename, overwrite)
 
     if profile:
@@ -64,6 +72,7 @@ def unpack_and_cleanup_zip():
     nginx_media_root = 'webapps/telephone/media'
     messages['src'] = messages.audio.apply(lambda x: Path(nginx_media_root, x))
     messages['dst'] = new_audio_filenames(messages.message_id)
+
     for message in messages.itertuples():
         try:
             audio = pydub.AudioSegment.from_wav(message.src)
@@ -72,8 +81,11 @@ def unpack_and_cleanup_zip():
                 audio = pydub.AudioSegment.from_mp3(message.src)
             except Exception as e:
                 raise e
+
+        # Trim sounds
         start_at = getattr_null(message, 'start_at', 0)
         end_at = getattr_null(message, 'end_at', audio.duration_seconds)
         trimmed = audio[start_at*1000:end_at*1000]  # pydub does things in msec
         trimmed.export(message.dst, format='wav')
+
     run('rm -r webapps')  # remove zip dir

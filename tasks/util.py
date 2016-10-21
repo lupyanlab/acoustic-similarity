@@ -104,7 +104,7 @@ def new_audio_filenames(message_ids, absolute=True):
 def get_linear_edges(branches=None):
     if branches is None:
         branches = get_messages_by_branch()
-        branches = branches.ix[branches.generation > 0]
+        branches = branches.ix[(branches.generation > 0) & (branches.verified)]
 
     def _get_linear_edges(branch):
         sounds = branch.audio.tolist()
