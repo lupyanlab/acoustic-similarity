@@ -34,6 +34,8 @@ class SimilarityJudgments(object):
     DELAY = 0.5  # time between sounds
     REPORT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
 
+    'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.651660994={datetime}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
+
     def __init__(self, player, overwrite=False):
         self.session = player.copy()
         start_time = datetime.now()
@@ -51,7 +53,7 @@ class SimilarityJudgments(object):
         # Create the trial objects.
         self.win = visual.Window(fullscr=True, units='pix')
         self.text_kwargs = dict(win=self.win, font='Consolas',
-                                wrapWidth=self.win.size[0] * 0.8)
+                                wrapWidth=self.win.size[0] * 0.7)
         self.scale = RatingScale(self.win, self.text_kwargs)
         self.sounds = {}
         self.icon = visual.ImageStim(self.win, 'stimuli/speaker_icon.png')
@@ -120,13 +122,14 @@ class SimilarityJudgments(object):
 
     def show_error_report(self, **prefill_kwargs):
         prefill_kwargs['name'] = self.session['name']
+        prefill_kwargs['datetime'] = self.session['datetime'].toordinal()
 
         self.win.winHandle.minimize()
         self.win.fullscr = False
         self.win.flip()
 
         webbrowser.open(self.REPORT_URL.format(**prefill_kwargs))
-        dlg = gui.Dlg('Return')
+        dlg = gui.Dlg('Return to experiment')
         dlg.show()
         if not dlg.OK:
             raise QuitExperiment
@@ -224,7 +227,7 @@ def determine_imitation_category(audio):
 
 class RatingScale(object):
     QUESTION = "Rate the similarity between the two sounds"
-    ERROR = "If there was an error, press 'e' to report it."
+    ERROR = "If there was an error, press 'e' to report it. To quit the experiment, press 'q'. You can resume it later"
     VALUES = range(1, 8)
     KEYBOARD = dict(q='quit', e='error')
     KEYBOARD.update({str(i): i for i in VALUES})
@@ -256,8 +259,8 @@ class RatingScale(object):
         self.title = visual.TextStim(text=self.QUESTION, height=30, bold=True,
                                      pos=(0, self.LABEL_Y), **text_kwargs)
 
-        # Add note about reporting errors
-        self.error = visual.TextStim(text=self.ERROR, height=12,
+        # Add note about other valid responses
+        self.notes = visual.TextStim(text=self.NOTES, height=12,
                                      pos=(0, -2*self.LABEL_Y), **text_kwargs)
 
     def draw(self, flip=True):
@@ -266,7 +269,7 @@ class RatingScale(object):
             rating.draw()
         for label in self.labels:
             label.draw()
-        self.error.draw()
+        self.notes.draw()
 
         if flip:
             self.win.flip()
@@ -307,5 +310,5 @@ class ReportError(Exception):
 if __name__ == '__main__':
     logging.console.setLevel(logging.WARNING)
     player = get_player_info()
-    judgments = SimilarityJudgments(player, overwrite=True)
+    judgments = SimilarityJudgments(player, overwrite=False)
     judgments.run()
