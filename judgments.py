@@ -16,7 +16,7 @@ On each trial, you will hear two sounds played in succession. After hearing the 
 
 High numbers on this scale indicate high similarity between the two sounds, with the highest possible rating meaning that the sounds were nearly indistinguishable after a single listen. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as they were the first time you heard them. In contrast, the lowest possible similarity rating would indicate that the sounds were perfectly distinguishable, and would not be likely to be confused.
 
-Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. Press the SPACEBAR to begin. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
+Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. Press the SPACEBAR to begin. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
 """
 
 BREAK = "Take a short break. Take the headphones off, stand up, and stretch out. When you are ready to continue, press the SPACEBAR."
@@ -125,9 +125,9 @@ class SimilarityJudgments(object):
         self.win.fullscr = False
         self.win.flip()
 
+        webbrowser.open(self.REPORT_URL.format(**prefill_kwargs))
         dlg = gui.Dlg('Return')
         dlg.show()
-        webbrowser.open(self.REPORT_URL.format(**prefill_kwargs))
         if not dlg.OK:
             raise QuitExperiment
 
