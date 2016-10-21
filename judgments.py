@@ -177,15 +177,15 @@ def make_trial_blocks(seed=None, completed_csv=None):
         previous_data = pandas.read_csv(completed_csv)
         completed_edges = edges_to_sets(previous_data)
     except ValueError, IOError:
-        logging.info('Could not find existing data. Running all trials.')
+        logging.warning('Could not find existing data. Running all trials.')
         trials = unique  # all trials are new
     else:
-        is_unfinished = (pandas.Series(edges_to_sets(unique),
-                                       index=unique.index)
-                               .apply(lambda x: x not in completed_edges))
-        trials = unique[is_unfinished]
+        trials = remove_completed_trials(unique, completed_edges)
+        logging.warning(
+            'Removed {} of {} total trials, {} trials remaining'.format(
+                len(completed_edges), len(unique), len(trials))
+            )
 
-    trials = unique.copy()
     random = numpy.random.RandomState(seed)
     trials.insert(0, 'block_ix', random.choice(range(1,5), len(trials)))
     trials = (trials.sort_values('block_ix')
@@ -200,6 +200,14 @@ def make_trial_blocks(seed=None, completed_csv=None):
     random.shuffle(blocks)
 
     return blocks
+
+
+def remove_completed_trials(unique, completed_edges):
+    is_unfinished = (pandas.Series(edges_to_sets(unique),
+                                   index=unique.index)
+                           .apply(lambda x: x not in completed_edges))
+    trials = unique[is_unfinished]
+    return trials
 
 
 def edges_to_sets(edges):
@@ -279,7 +287,6 @@ class RatingScale(object):
         self.draw()
         core.wait(self.HIGHLIGHT_TIME)
         selected.setColor('white')
-
 
 
 def get_player_info():
