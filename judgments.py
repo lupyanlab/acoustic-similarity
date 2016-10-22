@@ -14,7 +14,7 @@ TITLE = "Judge the similarity between two sounds"
 INSTRUCTIONS = """\
 On each trial, you will hear two sounds played in succession. To help you distinguish them, during the first you will see the number 1, and during the second a number 2. After hearing the second sound, you will be asked to rate how similar the two sounds are on a 7-point scale.
 
-A 7 means the sounds are nearly identical. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as the first time you heard them. A 1 on the scale means the sounds are entirely different and you would never confuse them. Each sound in the pair will come from a different speaker, so try to ignore differences due to just people having different voices. For example, a man and a woman saying the same word should get a high rating. 
+A 7 means the sounds are nearly identical. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as the first time you heard them. A 1 on the scale means the sounds are entirely different and you would never confuse them. Each sound in the pair will come from a different speaker, so try to ignore differences due to just people having different voices. For example, a man and a woman saying the same word should get a high rating.
 
 Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
 
@@ -34,9 +34,7 @@ class SimilarityJudgments(object):
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
 
     DELAY = 0.5  # time between sounds
-    REPORT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
-
-    'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.651660994={datetime}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
+    REPORT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.651660994={datetime}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
 
     def __init__(self, player, overwrite=False):
         self.session = player.copy()
@@ -177,9 +175,9 @@ class SimilarityJudgments(object):
                     logging.warning('Data for {} not saved'.format(x))
         self.data_file.write(','.join(map(str, row))+'\n')
 
-        
+
 def get_message_id_from_path(sound_path):
-    # e.g., 'C:/path/to/sound/filename.wav' -> 'filename'
+    # e.g., 'path/to/sound/filename.wav' -> 'filename'
     return Path(sound_path).stem
 
 def make_trial_blocks(seed=None, completed_csv=None):
