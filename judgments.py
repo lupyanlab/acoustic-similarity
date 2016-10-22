@@ -45,7 +45,7 @@ class SimilarityJudgments(object):
         fname = self.DATA_FILE.format(**player)
         fmode = 'w' if overwrite else 'a'
         write_header = ((not Path(fname).exists()) or fmode == 'w')
-        self.data_file = open(fname, fmode)
+        self.data_file = open(fname, fmode, 0)
         if write_header:
             self.write_trial()
 
@@ -95,7 +95,7 @@ class SimilarityJudgments(object):
         self.play_and_wait(second)
         self.scale.draw(flip=True)
 
-        response = dict(similarity=-1, notes='')
+        response = dict(similarity=-1, notes='None')
         try:
             response['similarity'] = self.scale.get_response()
         except ReportError:
@@ -292,6 +292,9 @@ class TextEntryForm(object):
         self.flip = text_kwargs['win'].flip
 
     def get_response(self):
+        self.text_box_title.draw()
+        self.flip()
+
         response = ''
         typing = True
         while typing:
