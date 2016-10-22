@@ -1,6 +1,6 @@
-# Calculate acoustic similarity for telephone game
+# Acoustic similarity in the telephone game
 
-How does the fidelity of verbal imitation change over generations of repetition?
+How does the fidelity of verbal imitation change over generations of repetition in branches of the Telephone game?
 
 ![](/definitions.png)
 
@@ -17,15 +17,14 @@ After cloning the repo, create an isolated virtualenv for installing the
 necessary packages. The `acousticsim` package has some heavy dependencies.
 Best thing to do is create a `conda` environment.
 
-    conda create -n acoustic
-    source activate acoustic              # activate the new environment
-    conda install numpy scipy matplotlib  # install the hard stuff
-    pip install -r requirements.txt       # install the easy stuff
+    conda create -n acoustic anaconda
+    source activate acoustic
+    pip install -r requirements/acoustic-similarity.txt
 
 ## Downloading data from S3
 
 Once everything is installed, you need to configure the AWS
-Command Line Tools so that you can get the data.
+Command Line Tools so that you can get the data, which is stored in an AWS S3 bucket.
 
     aws configure
 
@@ -41,7 +40,7 @@ in the configure step as well as the download step.
 
 ## Comparing sounds with acousticsim
 
-The invoke task `compare` is for using acousticsim to compare two sounds.
+The invoke task `compare` is for using `acousticsim` to compare two sounds.
 The arguments x and y can be specified to test out individual comparisons.
 
     inv compare_sounds -x path/to/sound1.wav -y path/to/sound2.wav
@@ -61,6 +60,12 @@ be calculated.
 
     inv compare_sounds
 
-## Comparing words with Phonological Corpus Tools
-
 ## Getting subjective judgments of similarity
+
+### Run a PsychoPy experiment
+
+On macOS 10.12, I can run this experiment with Enthought Canopy 32-bit python and PsychoPy installed (+ pyo for audio). The experiment requires a recent version of pandas.
+
+    (Canopy 32bit)$ pip install -r requirements/similarity-judgements.txt
+
+## Comparing transcriptions with Phonological Corpus Tools
