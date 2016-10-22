@@ -12,11 +12,13 @@ from tasks.settings import *
 
 TITLE = "Judge the similarity between two sounds"
 INSTRUCTIONS = """\
-On each trial, you will hear two sounds played in succession. After hearing the second sound, you will be asked to rate the similarity between the two sounds on a 7-point scale.
+On each trial, you will hear two sounds played in succession. To help you distinguish them, during the first you will see the number 1, and during the second a number 2. After hearing the second sound, you will be asked to rate how similar the two sounds are on a 7-point scale.
 
-High numbers on this scale indicate high similarity between the two sounds, with the highest possible rating meaning that the sounds were nearly indistinguishable after a single listen. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as they were the first time you heard them. In contrast, the lowest possible similarity rating would indicate that the sounds were perfectly distinguishable, and would not be likely to be confused.
+A 7 means the sounds are nearly identical. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as the first time you heard them. A 1 on the scale means the sounds are entirely different and you would never confuse them. Each sound in the pair will come from a different speaker, so try to ignore differences due to just people having different voices. For example, a man and a woman saying the same word should get a high rating. 
 
-Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. Press the SPACEBAR to begin. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
+Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
+
+Press the SPACEBAR to begin.
 """
 
 BREAK = "Take a short break. Take the headphones off, stand up, and stretch out. When you are ready to continue, press the SPACEBAR."
@@ -44,14 +46,16 @@ class SimilarityJudgments(object):
 
         fname = self.DATA_FILE.format(**player)
         fmode = 'w' if overwrite else 'a'
+        write_header = ((not Path(fname).exists()) or fmode == 'w')
         self.data_file = open(fname, fmode)
-        self.write_trial()
+        if write_header:
+            self.write_trial()
 
         # Make the trials for this participant.
         self.trial_blocks = make_trial_blocks(seed=seed, completed_csv=fname)
 
         # Create the trial objects.
-        self.win = visual.Window(fullscr=True, units='pix')
+        self.win = visual.Window(fullscr=True, units='pix', allowGUI=False)
         self.text_kwargs = dict(win=self.win, font='Consolas',
                                 wrapWidth=self.win.size[0] * 0.7)
         self.scale = RatingScale(self.win, self.text_kwargs)
@@ -154,22 +158,29 @@ class SimilarityJudgments(object):
 
     def write_trial(self, **trial_data):
         data = self.session.copy()
-        if trial_data:
+        if not trial_data:
+            # Write header for data file
+            row = self.DATA_COLS
+        else:
             data.update(trial_data)
             row = []
             for name in self.DATA_COLS:
                 value = data.get(name, '')
                 if not value:
                     logging.warning('Data for col {} not found'.format(name))
+                elif name in ['sound_x', 'sound_y']:
+                    value = get_message_id_from_path(value)
                 row.append(value)
 
             for x in trial_data.keys():
                 if x not in self.DATA_COLS:
                     logging.warning('Data for {} not saved'.format(x))
-        else:
-            row = self.DATA_COLS
         self.data_file.write(','.join(map(str, row))+'\n')
 
+        
+def get_message_id_from_path(sound_path):
+    # e.g., 'C:/path/to/sound/filename.wav' -> 'filename'
+    return Path(sound_path).stem
 
 def make_trial_blocks(seed=None, completed_csv=None):
     # Start with info for (gen i, gen i + 1) edges.
@@ -227,7 +238,7 @@ def determine_imitation_category(audio):
 
 class RatingScale(object):
     QUESTION = "Rate the similarity between the two sounds"
-    ERROR = "If there was an error, press 'e' to report it. To quit the experiment, press 'q'. You can resume it later"
+    NOTES = "If there was an error, press 'e' to report it. To quit the experiment, press 'q'. You can resume it later."
     VALUES = range(1, 8)
     KEYBOARD = dict(q='quit', e='error')
     KEYBOARD.update({str(i): i for i in VALUES})
