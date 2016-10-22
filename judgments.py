@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from datetime import datetime
 import webbrowser
+import string
 
 from psychopy import visual, core, event, sound, logging, gui
 from unipath import Path
@@ -16,25 +17,24 @@ On each trial, you will hear two sounds played in succession. To help you distin
 
 A 7 means the sounds are nearly identical. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as the first time you heard them. A 1 on the scale means the sounds are entirely different and you would never confuse them. Each sound in the pair will come from a different speaker, so try to ignore differences due to just people having different voices. For example, a man and a woman saying the same word should get a high rating.
 
-Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later.
-
-Press the SPACEBAR to begin.
+Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If something weird happens, like you only hear a single sound or there is some other reason you are unable to report the similarity between the two sounds, press the 'e' key. It will bring up a error report form in the browser for you to fill out. Exit the browser after submitting your response, and click 'OK' to continue the experiment. You can quit the experiment by pressing the 'q' key instead of a number. Your progress will be saved and you can continue later. Press the SPACEBAR to begin.
 """
 
 BREAK = "Take a short break. Take the headphones off, stand up, and stretch out. When you are ready to continue, press the SPACEBAR."
+
+ERROR_FORM_TITLE = "Describe the problem you experienced by typing a response into the box below. Don't worry about capitalization. When you are finished, press 'enter'."
 
 
 class SimilarityJudgments(object):
     """Collect similarity judgments comparing two sounds."""
     DATA_COLS = ('name datetime block_ix trial_ix sound_x sound_y '
-                 'reversed category similarity').split()
+                 'reversed category similarity notes').split()
     DATA_DIR = Path(DATA_DIR, 'judgments')
     if not DATA_DIR.isdir():
         DATA_DIR.mkdir()
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
 
     DELAY = 0.5  # time between sounds
-    REPORT_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd7pWTpRBu-GMfm2PHLlLkhJdjW3GY8oGDT9BRnXhYMYGNU3g/viewform?entry.359299688={name}&entry.651660994={datetime}&entry.1711179670={sound_x}&entry.94908278={sound_y}&entry.1143168349={reversed}'
 
     def __init__(self, player, overwrite=False):
         self.session = player.copy()
@@ -56,7 +56,8 @@ class SimilarityJudgments(object):
         self.win = visual.Window(fullscr=True, units='pix', allowGUI=False)
         self.text_kwargs = dict(win=self.win, font='Consolas',
                                 wrapWidth=self.win.size[0] * 0.7)
-        self.scale = RatingScale(self.win, self.text_kwargs)
+        self.scale = RatingScale(self.text_kwargs)
+        self.form = TextEntryForm(self.text_kwargs)
         self.sounds = {}
         self.icon = visual.ImageStim(self.win, 'stimuli/speaker_icon.png')
 
@@ -94,13 +95,11 @@ class SimilarityJudgments(object):
         self.play_and_wait(second)
         self.scale.draw(flip=True)
 
+        response = dict(similarity=-1, notes='')
         try:
-            response = self.scale.get_response()
+            response['similarity'] = self.scale.get_response()
         except ReportError:
-            response = dict(similarity=-1)
-            self.show_error_report(sound_x=trial.sound_x,
-                                   sound_y=trial.sound_y,
-                                   reversed=trial.reversed)
+            response['notes'] = self.form.get_response()
 
         response.update(**trial._asdict())
         self.write_trial(**response)
@@ -121,25 +120,6 @@ class SimilarityJudgments(object):
         visual.TextStim(BREAK, **self.text_kwargs).draw()
         self.win.flip()
         event.waitKeys(keyList=['space'])
-
-    def show_error_report(self, **prefill_kwargs):
-        prefill_kwargs['name'] = self.session['name']
-        prefill_kwargs['datetime'] = self.session['datetime'].toordinal()
-
-        self.win.winHandle.minimize()
-        self.win.fullscr = False
-        self.win.flip()
-
-        webbrowser.open(self.REPORT_URL.format(**prefill_kwargs))
-        dlg = gui.Dlg('Return to experiment')
-        dlg.show()
-        if not dlg.OK:
-            raise QuitExperiment
-
-        self.win.winHandle.maximize()
-        self.win.fullscr = True
-        self.win.winHandle.activate()
-        self.win.flip()
 
     def get_or_create_sounds(self, *args):
         """Get sounds by name or create them if they don't exist."""
@@ -245,8 +225,9 @@ class RatingScale(object):
     FONT_SIZE = 30
     HIGHLIGHT_TIME = 0.5
 
-    def __init__(self, win, text_kwargs):
-        self.win = win
+    def __init__(self, text_kwargs):
+        win = text_kwargs['win']
+        self.flip = win.flip
 
         x_positions = numpy.array([(i-1) * self.X_GUTTER for i in self.VALUES])
         x_positions = x_positions - x_positions.mean()
@@ -281,7 +262,7 @@ class RatingScale(object):
         self.notes.draw()
 
         if flip:
-            self.win.flip()
+            self.flip()
 
     def get_response(self):
         keyboard_responses = event.waitKeys(keyList=self.KEYBOARD.keys())
@@ -291,7 +272,7 @@ class RatingScale(object):
         elif key == 'error':
             raise ReportError
         self.highlight(key)
-        return dict(similarity=key)
+        return key
 
     def highlight(self, key):
         selected = self.ratings[int(key)-1]
@@ -299,6 +280,38 @@ class RatingScale(object):
         self.draw()
         core.wait(self.HIGHLIGHT_TIME)
         selected.setColor('white')
+
+
+class TextEntryForm(object):
+    def __init__(self, text_kwargs, title=None, title_y=200, text_box_top=150):
+        title = title or ERROR_FORM_TITLE
+        self.text_box_title = visual.TextStim(text=title, pos=(0, title_y),
+                                              bold=True, **text_kwargs)
+        self.text_box = visual.TextStim(pos=(0, text_box_top), alignVert='top',
+                                        **text_kwargs)
+        self.flip = text_kwargs['win'].flip
+
+    def get_response(self):
+        response = ''
+        typing = True
+        while typing:
+            for key in event.getKeys():
+                if key in ['enter', 'return']:
+                    typing = False
+                    break
+                elif key == 'backspace' and len(response) > 0:
+                    response = response[:-1]
+                elif key in string.lowercase + '.,':
+                    response += key
+                elif key == 'space':
+                    response += ' '
+
+                self.text_box_title.draw()
+                self.text_box.setText(response)
+                self.text_box.draw()
+                self.flip()
+
+        return response
 
 
 def get_player_info():
