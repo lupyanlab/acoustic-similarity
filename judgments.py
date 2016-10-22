@@ -17,12 +17,12 @@ On each trial, you will hear two sounds played in succession. To help you distin
 
 A 7 means the sounds are nearly identical. That is, if you were to hear these two sounds played again, you would likely be unable to tell whether they were in the same or different order as the first time you heard them. A 1 on the scale means the sounds are entirely different and you would never confuse them. Each sound in the pair will come from a different speaker, so try to ignore differences due to just people having different voices. For example, a man and a woman saying the same word should get a high rating.
 
-Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If you need to hear the sounds again, you can press 'r' to repeat the trial. If something weird happens, like you can only hear a single sound or there is some other reason you are unable to judge the similarity between the sounds, press the 'e' key to report the error. Pressing 'q' will quit the experiment. Your progress will be saved and you can continue later. Press the SPACEBAR to begin the experiment.
+Please try to use as much of the scale as you can while maximizing the likelihood that if you did this again, you would reach the same judgments. If you need to hear the sounds again, you can press 'r' to repeat the trial. If one of the sounds is a non-verbal sound (like someone tapping on the mic), or if you only hear a single sound, or if you are otherwise unable to judge the similarity between the sounds, press the 'e' key to report the error. Pressing 'q' will quit the experiment. Your progress will be saved and you can continue later. Press the SPACEBAR to begin the experiment.
 """
 
 BREAK = "Take a short break. Take the headphones off, stand up, and stretch out. When you are ready to continue, press the SPACEBAR."
 
-ERROR_FORM_TITLE = "Describe why you were unable to judge the similarity between the sounds. Don't worry about capitalization or punctuation. When you are finished, press 'enter'."
+ERROR_FORM_TITLE = "Describe why you were unable to judge the similarity between the sounds. Type your response, and don't worry about capitalization or punctuation. For example, 'couldnt hear first sound' or 'second sound was not a voice'. When you are finished, press 'enter'."
 
 
 class SimilarityJudgments(object):
@@ -329,7 +329,7 @@ class TextEntryForm(object):
                     break
                 elif key == 'backspace' and len(response) > 0:
                     response = response[:-1]
-                elif key in string.lowercase + '.,':
+                elif key in string.lowercase + string.digits:
                     response += key
                 elif key == 'space':
                     response += ' '
