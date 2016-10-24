@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 def download(ctx, filename=None, profile=None, overwrite=False, verbose=False):
     """Download the data from the Telephone app."""
     if verbose:
-        logger.setLeve(logging.INFO)
+        logger.setLevel(logging.INFO)
 
     files = determine_files_to_download(filename, overwrite)
 
@@ -77,6 +77,7 @@ def unpack_and_cleanup_zip():
         try:
             audio = pydub.AudioSegment.from_wav(message.src)
         except Exception as e:
+            logger.warning('Sound {} was not a wav file'.format(message.audio))
             try:
                 audio = pydub.AudioSegment.from_mp3(message.src)
             except Exception as e:
@@ -84,8 +85,13 @@ def unpack_and_cleanup_zip():
 
         # Trim sounds
         start_at = getattr_null(message, 'start_at', 0)
-        end_at = getattr_null(message, 'end_at', audio.duration_seconds)
-        trimmed = audio[start_at*1000:end_at*1000]  # pydub does things in msec
+        end_at = getattr_null(message, 'end_at', audio.duration_seconds * 1000)
+        trimmed = audio[start_at:end_at]
+
+        if trimmed.duration_seconds < 0.5:
+            logger.warning('Sound {} was too short ({} seconds)'.format(
+                Path(message.audio).name, trimmed.duration_seconds))
+
         trimmed.export(message.dst, format='wav')
 
     run('rm -r webapps')  # remove zip dir
