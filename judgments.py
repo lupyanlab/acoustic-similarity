@@ -222,11 +222,17 @@ class Trials(object):
         is_unfinished = (pandas.Series(Trials.edges_to_sets(unique),
                                        index=unique.index)
                                .apply(lambda x: x not in completed_edges))
-        return unique[is_unfinished]
+        unfinished = unique[is_unfinished]
+        logging.warning('dropped {} of {} total trials ({} left)'.format(
+            (~is_unfinished).sum(), len(unique), len(unfinished)
+        ))
+        return unfinished
 
     @staticmethod
     def edges_to_sets(edges):
-        return [{edge.sound_x, edge.sound_y} for edge in edges.itertuples()]
+        stem = lambda x: SimilarityJudgments.get_message_id_from_path(x)
+        return [{stem(edge.sound_x), stem(edge.sound_y)}
+                for edge in edges.itertuples()]
 
     @staticmethod
     def determine_imitation_category(audio):
