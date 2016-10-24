@@ -176,7 +176,13 @@ class SimilarityJudgments(object):
     @staticmethod
     def get_message_id_from_path(sound_path):
         # e.g., 'path/to/sound/filename.wav' -> 'filename'
-        return Path(sound_path).stem
+		# Also needs to be able to handle sound_path == numpy.int64
+		try:
+			message_id = Path(sound_path).stem
+		except TypeError:
+			message_id = Path(int(sound_path)).stem
+		
+		return message_id
 
 
 class Trials(object):
@@ -193,10 +199,6 @@ class Trials(object):
             trials = unique  # all trials are new
         else:
             trials = Trials.remove_completed_trials(unique, completed_edges)
-            logging.warning(
-                'Removed {} of {} total trials, {} trials remaining'.format(
-                    len(completed_edges), len(unique), len(trials))
-                )
 
         self.random = numpy.random.RandomState(seed)
         trials.insert(0, 'block_ix',
@@ -223,7 +225,7 @@ class Trials(object):
                                        index=unique.index)
                                .apply(lambda x: x not in completed_edges))
         unfinished = unique[is_unfinished]
-        logging.warning('dropped {} of {} total trials ({} left)'.format(
+        logging.warning('Dropped {} of {} total trials ({} left)'.format(
             (~is_unfinished).sum(), len(unique), len(unfinished)
         ))
         return unfinished
