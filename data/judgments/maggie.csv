@@ -1,97 +1,23 @@
 name,datetime,block_ix,trial_ix,sound_x,sound_y,reversed,category,similarity,notes,repeat
-maggie,2016-10-24 13:15:26.249000,1,3,87,266,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,3,87,266,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,3,87,266,0,glass,-1,couldnt hear either sound,0
-maggie,2016-10-24 13:15:26.249000,1,4,266,388,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,4,266,388,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,4,266,388,1,glass,-1,didnt hear second sound and background sound preceded actual sound in first,0
-maggie,2016-10-24 13:15:26.249000,1,6,464,520,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,6,464,520,0,glass,-1,mouse click before second sound,0
 maggie,2016-10-24 13:15:26.249000,1,10,483,524,1,glass,5,None,0
-maggie,2016-10-24 13:15:26.249000,1,15,307,348,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,15,307,348,1,glass,-1,first sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,1,17,348,449,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,17,348,449,1,glass,-1,neither sound played,0
-maggie,2016-10-24 13:15:26.249000,1,18,449,475,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,18,449,475,0,glass,-1,first sound didnt play,0
 maggie,2016-10-24 13:15:26.249000,1,22,329,383,0,glass,4,None,0
-maggie,2016-10-24 13:15:26.249000,1,23,199,368,0,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,1,23,199,368,0,glass,5,None,0
-maggie,2016-10-24 13:15:26.249000,1,24,438,489,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,24,438,489,1,glass,-1,heard a click before second sound,0
 maggie,2016-10-24 13:15:26.249000,1,27,405,480,1,glass,5,None,0
 maggie,2016-10-24 13:15:26.249000,1,29,317,405,1,glass,6,None,0
-maggie,2016-10-24 13:15:26.249000,1,30,498,513,1,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,1,30,498,513,1,glass,4,None,0
-maggie,2016-10-24 13:15:26.249000,1,34,491,549,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,34,491,549,0,glass,-1,second sound didnt play,0
 maggie,2016-10-24 13:15:26.249000,1,35,256,358,0,glass,4,None,0
-maggie,2016-10-24 13:15:26.249000,1,36,471,533,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,1,36,471,533,0,glass,-1,second sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,1,38,533,566,1,glass,-1,second sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,1,56,143,188,0,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,1,56,143,188,0,glass,2,None,0
-maggie,2016-10-24 13:15:26.249000,1,57,361,423,0,glass,-1,second sound didnt play,0
 maggie,2016-10-24 13:15:26.249000,1,58,475,538,0,glass,6,None,0
 maggie,2016-10-24 13:15:26.249000,1,72,378,404,1,glass,1,None,0
 maggie,2016-10-24 13:15:26.249000,1,80,148,192,0,glass,1,None,0
-maggie,2016-10-24 13:15:26.249000,1,82,205,221,0,glass,-1,second sound had lots of time before and after and can hear recorder speaking in end,0
-maggie,2016-10-24 13:15:26.249000,2,96,331,431,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,96,331,431,0,glass,-1,first sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,2,97,336,434,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,97,336,434,0,glass,-1,second sound had first sound playing within it and recorder repeating it twice,0
-maggie,2016-10-24 13:15:26.249000,2,100,232,331,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,100,232,331,1,glass,-1,first didnt play and second had click preceding sound,0
-maggie,2016-10-24 13:15:26.249000,2,102,136,199,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,102,136,199,1,glass,-1,both had click noises after sound,0
-maggie,2016-10-24 13:15:26.249000,2,108,164,180,1,glass,-1,first sound had unrelated noise in beginning,0
-maggie,2016-10-24 13:15:26.249000,2,109,321,427,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,109,321,427,1,glass,-1,first sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,2,110,284,321,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,110,284,321,0,glass,-1,first sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,2,114,251,344,0,glass,-1,lots of extraneous time and noise after first sound,0
 maggie,2016-10-24 13:15:26.249000,2,115,301,361,0,glass,5,None,0
-maggie,2016-10-24 13:15:26.249000,2,116,63,251,1,glass,-1,extraneous time and noise after first sound,0
-maggie,2016-10-24 13:15:26.249000,2,119,266,378,1,glass,-1,click before first sound and didnt hear second sound,0
 maggie,2016-10-24 13:15:26.249000,2,121,270,293,0,glass,2,None,0
-maggie,2016-10-24 13:15:26.249000,2,123,429,483,1,glass,-1,click after first sound and second played two sounds with brief pause between,0
-maggie,2016-10-24 13:15:26.249000,2,124,178,365,1,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,2,124,178,365,1,glass,6,None,0
 maggie,2016-10-24 13:15:26.249000,2,126,159,178,1,glass,5,None,0
 maggie,2016-10-24 13:15:26.249000,2,139,452,509,0,glass,6,None,0
-maggie,2016-10-24 13:15:26.249000,2,142,496,502,0,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,2,142,496,502,0,glass,6,None,0
-maggie,2016-10-24 13:15:26.249000,2,148,423,460,0,glass,-1,first sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,2,150,281,297,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,150,281,297,1,glass,-1,clicks before both and dark bark after second,0
-maggie,2016-10-24 13:15:26.249000,2,183,411,491,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,2,183,411,491,0,glass,-1,click heard before first,0
-maggie,2016-10-24 13:15:26.249000,3,195,383,457,1,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,3,195,383,457,1,glass,4,None,0
-maggie,2016-10-24 13:15:26.249000,3,196,245,286,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,196,245,286,0,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,3,196,245,286,0,glass,4,None,0
 maggie,2016-10-24 13:15:26.249000,3,200,341,416,1,glass,3,None,0
-maggie,2016-10-24 13:15:26.249000,3,204,368,438,1,glass,-1,click before first sound,0
-maggie,2016-10-24 13:15:26.249000,3,208,144,186,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,208,144,186,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,208,144,186,0,glass,-1,None,1
 maggie,2016-10-24 13:15:26.249000,3,208,144,186,0,glass,7,None,0
-maggie,2016-10-24 13:15:26.249000,3,214,134,194,1,glass,-1,lots of noise after first sound,0
 maggie,2016-10-24 13:15:26.249000,3,217,172,301,0,glass,6,None,0
-maggie,2016-10-24 13:15:26.249000,3,233,396,464,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,233,396,464,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,233,396,464,1,glass,-1,click heard before second sound,0
-maggie,2016-10-24 13:15:26.249000,3,244,460,554,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,244,460,554,0,glass,-1,couldnt hear second sound,0
-maggie,2016-10-24 13:15:26.249000,3,248,489,544,0,glass,-1,second sound has extraneous noise before and after,0
-maggie,2016-10-24 13:15:26.249000,3,249,388,396,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,249,388,396,0,glass,-1,noise before first sound and click before second,0
-maggie,2016-10-24 13:15:26.249000,3,252,101,284,0,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,252,101,284,0,glass,-1,second sound didnt play,0
-maggie,2016-10-24 13:15:26.249000,3,253,358,411,0,glass,-1,click before second sound,0
-maggie,2016-10-24 13:15:26.249000,3,255,445,452,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,255,445,452,1,glass,-1,click before both first and second sounds,0
-maggie,2016-10-24 13:15:26.249000,3,256,336,445,1,glass,-1,click before first sound,0
-maggie,2016-10-24 13:15:26.249000,3,257,277,314,1,glass,-1,None,1
-maggie,2016-10-24 13:15:26.249000,3,257,277,314,1,glass,-1,click before first sound,0
