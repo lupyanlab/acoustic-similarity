@@ -12,10 +12,7 @@ import_error_msg = 'failed to import task: "{}"'
 
 try:
     from .download import download
-except ImportError:
-    print(import_error_msg.format('download'))
-
-try:
     from .compare_sounds import compare_sounds
+    from .compare_words import compare_words
 except ImportError:
-    print(import_error_msg.format('compare_sounds'))
+    print('failed to import tasks')

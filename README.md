@@ -69,3 +69,7 @@ On macOS 10.12, I can run this experiment with Enthought Canopy 32-bit python an
     (Canopy 32bit)$ pip install -r requirements/similarity-judgements.txt
 
 ## Comparing transcriptions with Phonological Corpus Tools
+
+To calculate the neighborhood density of the top transcriptions from the telephone game, run the following command.
+
+    inv compare_words

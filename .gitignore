@@ -12,3 +12,4 @@ src/
 # data
 downloads/
 data/sounds/
+.Rproj.user
