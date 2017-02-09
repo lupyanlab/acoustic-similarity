@@ -2,7 +2,7 @@
 
 How does the fidelity of verbal imitation change over generations of repetition in branches of the Telephone game?
 
-<img src="https://github.com/lupyanlab/acoustic-similarity/raw/master/definitions.png" align="left" width="200">
+<img src="https://github.com/lupyanlab/acoustic-similarity/raw/master/definitions.png" width="200">
 
 ## Quickstart
 
