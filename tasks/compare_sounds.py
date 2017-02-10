@@ -1,4 +1,6 @@
 import sys
+import json
+
 from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
@@ -11,8 +13,11 @@ from .settings import *
                       "If no type is given, all types are compared."),
                 x=("Path to first wav file to compare. Optional."
                    "If specified, arg y is required."),
-                y="Path to second wav file. Optional."))
-def compare_sounds(ctx, type='linear', x=None, y=None):
+                y="Path to second wav file. Optional.",
+                json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
+                output="Name of output csv."))
+def compare_sounds(ctx, type='linear', x=None, y=None, json_kwargs=None,
+                   output=None):
     """Compute acoustic similarity between .wav files."""
     if x and y:
         edges = create_single_edge(x, y)
@@ -21,11 +26,12 @@ def compare_sounds(ctx, type='linear', x=None, y=None):
         raise AssertionError('need both -x and -y')
     elif type == 'linear':
         edges = get_linear_edges()
-        output = Path(DATA_DIR, 'linear.csv')
+        output = output or Path(DATA_DIR, 'linear.csv')
     else:
         raise NotImplementedError('type == {}'.format(type))
 
-    similarities = calculate_similarities(edges)
+    kwargs = json.loads(json_kwargs) if json_kwargs else {}
+    similarities = calculate_similarities(edges, **kwargs)
     similarities.to_csv(output, index=False)
 
 
@@ -34,11 +40,11 @@ def create_single_edge(x, y):
     return pandas.DataFrame(dict(sound_x=x, sound_y=y), index=[0])
 
 
-def calculate_similarities(edges):
+def calculate_similarities(edges, **kwargs):
     unique_edges = edges[['sound_x', 'sound_y']].drop_duplicates()
     mapping = [(edge.sound_x, edge.sound_y)
                for edge in unique_edges.itertuples()]
-    results = acoustic_similarity_mapping(mapping)
+    results = acoustic_similarity_mapping(mapping, **kwargs)
     records = [(x, y, score) for (x, y), score in results.items()]
     cols = ['sound_x', 'sound_y', 'similarity']
     scored_edges = pandas.DataFrame.from_records(records, columns=cols)

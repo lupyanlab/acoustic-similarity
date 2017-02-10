@@ -9,6 +9,9 @@ src/
 # os
 .DS_Store
 
+# editor
+*.swp
+
 # data
 downloads/
 data/sounds/
