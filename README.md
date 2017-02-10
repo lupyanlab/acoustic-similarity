@@ -2,9 +2,11 @@
 
 How does the fidelity of verbal imitation change over generations of repetition in branches of the Telephone game?
 
-![](/definitions.png)
+<img src="https://github.com/lupyanlab/acoustic-similarity/raw/master/definitions.png" width="200">
 
 ## Quickstart
+
+To get started, clone the repo, and use `invoke` to run tasks.
 
     git clone https://github.com/lupyanlab/acoustic-similarity.git
     cd acoustic-similarity
@@ -17,9 +19,18 @@ After cloning the repo, create an isolated virtualenv for installing the
 necessary packages. The `acousticsim` package has some heavy dependencies.
 Best thing to do is create a `conda` environment.
 
-    conda create -n acoustic anaconda
-    source activate acoustic
-    pip install -r requirements/acoustic-similarity.txt
+### Installing Anaconda
+
+On a Mac you can install anaconda with homebrew.
+
+    brew install anaconda            # installs conda at ~/anaconda3
+    source ~/anaconda3/bin/activate  # active conda
+
+Once `conda` is installed and activated, create a new environment with the default anaconda dependencies.
+
+    conda create -n acoustic anaconda  # create a new conda env named "acoustic" with the default conda packages
+    source activate acoustic           # activate the new conda env
+    pip install -r requirements/acoustic-similarity.txt  # install the additional requirements for this repo
 
 ## Downloading data from S3
 
@@ -38,9 +49,9 @@ in the configure step as well as the download step.
     aws --profile=myprofile configure
     inv download --profile=myprofile
 
-## Comparing sounds with acousticsim
+## Comparing sounds with `acousticsim`
 
-The invoke task `compare` is for using `acousticsim` to compare two sounds.
+The invoke task `compare_sounds` is for using `acousticsim` to compare two sounds.
 The arguments x and y can be specified to test out individual comparisons.
 
     inv compare_sounds -x path/to/sound1.wav -y path/to/sound2.wav
@@ -59,6 +70,13 @@ comparison are "data/linear.csv". If no type is specified, all types will
 be calculated.
 
     inv compare_sounds
+
+The main function used to make the comparisons is [acousticsim.main.acoustic_similarity_mapping](https://github.com/PhonologicalCorpusTools/CorpusTools/blob/master/corpustools/acousticsim/main.py#L48). Additional arguments to this function can be provided via the command line in json format. For example, to use "mfcc" representations instead of "envelopes" (the default), you would do this:
+
+    inv compare_sounds -x 34 -y 101 -j '{"rep": "mfcc"}'
+
+A full list of options that can be passed to `acoustic_similarity_mapping` are available here:  
+<https://github.com/PhonologicalCorpusTools/CorpusTools/blob/master/corpustools/acousticsim/main.py#L48>
 
 ## Getting subjective judgments of similarity
 
