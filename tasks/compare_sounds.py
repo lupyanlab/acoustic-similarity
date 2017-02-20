@@ -18,14 +18,23 @@ compare_sounds_help = dict(
        "If specified, arg y is required."),
     y="Path to second wav file. Optional.",
     json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
-    output="Name of output csv.",
 )
 
 
 @task(help=compare_sounds_help)
-def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None,
-                   output=None):
-    """Compute acoustic similarity between .wav files."""
+def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
+    """Compute acoustic similarity between .wav files.
+
+    Run MFCC comparisons and return the distances:
+
+        $ inv compare_sounds -j '{"rep": "mfcc", "output_sim": false}'
+    
+    To see what other options are available via the json_kwargs argument,
+    see:
+
+        https://github.com/PhonologicalCorpusTools/CorpusTools/blob/master/corpustools/acousticsim/main.py#L48
+
+    """
     kwargs = json.loads(json_kwargs) if json_kwargs else {}
 
     if x and y:
@@ -44,18 +53,20 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None,
             print('  - '+t)
         return
 
-    types = [type] or available_types
+    if type:
+        types = [type]
+    else:
+        types = available_types
+
     if 'linear' in types:
         edges = get_linear_edges()
-        output = output or Path(DATA_DIR, 'linear.csv')
         similarities = calculate_similarities(edges, **kwargs)
-        similarities.to_csv(output, index=False)
+        similarities.to_csv(Path(DATA_DIR, 'linear.csv'), index=False)
 
     if 'between' in types:
         edges = get_between_category_edges(n_sample=100)
-        output = output or Path(DATA_DIR, 'between.csv')
         similarities = calculate_similarities(edges, **kwargs)
-        similarities.to_csv(output, index=False)
+        similarities.to_csv(Path(DATA_DIR, 'between.csv'), index=False)
 
 
 def create_single_edge(x, y):
