@@ -2,8 +2,9 @@ import pandas
 from unipath import Path
 
 from tasks.download import collapse_branches
-from tasks.compare import (expand_message_list, get_linear_edges,
-                           calculate_similarities, create_single_edge)
+from tasks.compare_sounds import (calculate_similarities, create_single_edge)
+from tasks.util import (expand_message_list, get_linear_edges,
+                        get_between_category_edges)
 
 
 def test_collapse_single_branch():
@@ -42,3 +43,11 @@ def test_calculate_similarities():
     edges = create_single_edge('fixtures/1.wav', 'fixtures/2.wav')
     similarities = calculate_similarities(edges)
     assert len(similarities) == 1
+
+def test_between_category_edges():
+    messages = pandas.DataFrame({
+        'category': ['a', 'b'],
+        'audio': ['1.wav', '2.wav'],
+    })
+    edges = get_between_category_edges(messages, n_sample=1)
+    assert edges.iloc[0, 0:2].tolist() == ['1.wav', '2.wav']

@@ -5,34 +5,57 @@ from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
-from .util import get_linear_edges
+from .util import get_linear_edges, get_between_category_edges
 from .settings import *
 
 
-@task(help=dict(type=("Type of comparison. Right now only option is 'linear'. "
-                      "If no type is given, all types are compared."),
-                x=("Path to first wav file to compare. Optional."
-                   "If specified, arg y is required."),
-                y="Path to second wav file. Optional.",
-                json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
-                output="Name of output csv."))
-def compare_sounds(ctx, type='linear', x=None, y=None, json_kwargs=None,
+compare_sounds_help = dict(
+    type=("Type of comparison. Provide `--type=list` to see available "
+          "comparison types. Type determines how edges are computed "
+          "before making the comparisons. "
+          "If no type is given, all types are compared."),
+    x=("Path to first wav file to compare. Optional."
+       "If specified, arg y is required."),
+    y="Path to second wav file. Optional.",
+    json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
+    output="Name of output csv.",
+)
+
+
+@task(help=compare_sounds_help)
+def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None,
                    output=None):
     """Compute acoustic similarity between .wav files."""
+    kwargs = json.loads(json_kwargs) if json_kwargs else {}
+
     if x and y:
         edges = create_single_edge(x, y)
-        output = sys.stdout
+        similarities = calculate_similarities(edges, **kwargs)
+        similarities.to_csv(sys.stdout, index=False)
+        return
     elif x or y:
         raise AssertionError('need both -x and -y')
-    elif type == 'linear':
+
+    available_types = ['linear', 'between']
+
+    if type and type == 'list':
+        print('Available comparisons:')
+        for t in available_types:
+            print('  - '+t)
+        return
+
+    types = [type] or available_types
+    if 'linear' in types:
         edges = get_linear_edges()
         output = output or Path(DATA_DIR, 'linear.csv')
-    else:
-        raise NotImplementedError('type == {}'.format(type))
+        similarities = calculate_similarities(edges, **kwargs)
+        similarities.to_csv(output, index=False)
 
-    kwargs = json.loads(json_kwargs) if json_kwargs else {}
-    similarities = calculate_similarities(edges, **kwargs)
-    similarities.to_csv(output, index=False)
+    if 'between' in types:
+        edges = get_between_category_edges(n_sample=100)
+        output = output or Path(DATA_DIR, 'between.csv')
+        similarities = calculate_similarities(edges, **kwargs)
+        similarities.to_csv(output, index=False)
 
 
 def create_single_edge(x, y):

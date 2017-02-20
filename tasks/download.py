@@ -88,7 +88,7 @@ def unpack_and_cleanup_zip():
         end_at = getattr_null(message, 'end_at', audio.duration_seconds * 1000)
         trimmed = audio[start_at:end_at]
 
-        if trimmed.duration_seconds < 0.5:
+        if trimmed.duration_seconds < 0.4:
             logger.warning('Sound {} was too short ({} seconds)'.format(
                 Path(message.audio).name, trimmed.duration_seconds))
 
