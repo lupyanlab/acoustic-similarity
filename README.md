@@ -78,6 +78,10 @@ The main function used to make the comparisons is [acousticsim.main.acoustic_sim
 A full list of options that can be passed to `acoustic_similarity_mapping` are available here:  
 <https://github.com/PhonologicalCorpusTools/CorpusTools/blob/master/corpustools/acousticsim/main.py#L48>
 
+Here are the commands used to generate the data in the paper.
+
+    inv compare_sounds -j '{"rep": "mfcc", "num_coeffs": 12, "output_sim": true}'
+
 ## Getting subjective judgments of similarity
 
 ### Run a PsychoPy experiment

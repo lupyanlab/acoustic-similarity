@@ -27,8 +27,8 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
 
     Run MFCC comparisons and return the distances:
 
-        $ inv compare_sounds -j '{"rep": "mfcc", "output_sim": false}'
-    
+        $ inv compare_sounds -j '{"rep": "mfcc", "num_coeffs": 12, "output_sim": true}'
+
     To see what other options are available via the json_kwargs argument,
     see:
 
