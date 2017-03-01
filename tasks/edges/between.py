@@ -4,7 +4,7 @@ import numpy
 from .messages import read_downloaded_messages, update_audio_filenames
 
 
-def get_between_category_edges(messages=None, n_sample=10):
+def get_between_edges(messages=None, n_sample=10):
     if messages is None:
         messages = read_downloaded_messages()
         update_audio_filenames(messages)

@@ -6,7 +6,8 @@ import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
 from .edges import (create_single_edge, get_linear_edges,
-                    get_between_category_edges, message_id_from_wav)
+                    get_between_edges, get_within_edges,
+                    message_id_from_wav)
 from .settings import *
 
 
@@ -39,8 +40,7 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
     elif x or y:
         raise AssertionError('need both -x and -y')
 
-    available_types = ['linear', 'between', 'within-chain', 'within-seed',
-                       'within-category']
+    available_types = ['linear', 'between', 'within']
 
     if type and type == 'list':
         print('Available comparisons:')
@@ -57,9 +57,11 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
         if edge_type == 'linear':
             edges = get_linear_edges()
         elif edge_type == 'between':
-            edges = get_between_category_edges(n_sample=100)
+            edges = get_between_edges(n_sample=100)
+        elif edge_type == 'within':
+            edges = get_within_edges()
         else:
-            raise NotImplementedError
+            raise NotImplementedError('edge type "{}"'.format(edge_type))
 
         similarities = calculate_similarities(edges, **kwargs)
         similarities.to_csv(Path(DATA_DIR, '{}.csv'.format(edge_type)),
