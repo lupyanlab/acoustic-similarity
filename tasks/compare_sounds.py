@@ -5,23 +5,17 @@ from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
-from .util import get_linear_edges, get_between_category_edges
+from .edges import (create_single_edge, get_linear_edges,
+                    get_between_category_edges, message_id_from_wav)
 from .settings import *
 
 
-compare_sounds_help = dict(
-    type=("Type of comparison. Provide `--type=list` to see available "
-          "comparison types. Type determines how edges are computed "
-          "before making the comparisons. "
-          "If no type is given, all types are compared."),
-    x=("Path to first wav file to compare. Optional."
-       "If specified, arg y is required."),
+@task(help=dict(
+    type="Type of comparison. Provide --type=list to see available comparison types. Type determines which edges are compared. If no type is given, all types are compared",
+    x="Path to first wav file to compare. Optional. If specified, arg y is required.",
     y="Path to second wav file. Optional.",
     json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
-)
-
-
-@task(help=compare_sounds_help)
+))
 def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
     """Compute acoustic similarity between .wav files.
 
@@ -59,29 +53,17 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
     else:
         types = available_types
 
-    if 'linear' in types:
-        edges = get_linear_edges()
+    for edge_type in types:
+        if edge_type == 'linear':
+            edges = get_linear_edges()
+        elif edge_type == 'between':
+            edges = get_between_category_edges(n_sample=100)
+        else:
+            raise NotImplementedError
+
         similarities = calculate_similarities(edges, **kwargs)
-        similarities.to_csv(Path(DATA_DIR, 'linear.csv'), index=False)
-
-    if 'between' in types:
-        edges = get_between_category_edges(n_sample=100)
-        similarities = calculate_similarities(edges, **kwargs)
-        similarities.to_csv(Path(DATA_DIR, 'between.csv'), index=False)
-
-    if 'within-chain' in types:
-        raise NotImplementedError
-
-    if 'within-seed' in types:
-        raise NotImplementedError
-
-    if 'within-category' in types:
-        raise NotImplementedError
-
-
-def create_single_edge(x, y):
-    x, y = find_sound(x), find_sound(y)
-    return pandas.DataFrame(dict(sound_x=x, sound_y=y), index=[0])
+        similarities.to_csv(Path(DATA_DIR, '{}.csv'.format(edge_type)),
+                            index=False)
 
 
 def calculate_similarities(edges, **kwargs):
@@ -104,19 +86,3 @@ def calculate_similarities(edges, **kwargs):
     labeled = edges.merge(scored_edges)
 
     return labeled
-
-
-def message_id_from_wav(x):
-    name = Path(x).stem
-    try:
-        return int(name)
-    except ValueError:
-        return name
-
-
-def find_sound(x):
-    if Path(x).exists():
-        return x
-    else:
-        shortname = '{sounds_dir}/{x}.wav'
-        return shortname.format(sounds_dir=SOUNDS_DIR, x=x)

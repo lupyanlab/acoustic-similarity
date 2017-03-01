@@ -8,7 +8,7 @@ from unipath import Path
 import pandas
 import numpy
 
-from tasks.util import *
+from tasks.edges import get_linear_edges
 from tasks.settings import *
 
 TITLE = "Judge the similarity between two sounds"
@@ -181,7 +181,7 @@ class SimilarityJudgments(object):
 			message_id = Path(sound_path).stem
 		except TypeError:
 			message_id = Path(int(sound_path)).stem
-		
+
 		return message_id
 
 
