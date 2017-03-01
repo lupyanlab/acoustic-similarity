@@ -45,7 +45,8 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
     elif x or y:
         raise AssertionError('need both -x and -y')
 
-    available_types = ['linear', 'between']
+    available_types = ['linear', 'between', 'within-chain', 'within-seed',
+                       'within-category']
 
     if type and type == 'list':
         print('Available comparisons:')
@@ -67,6 +68,15 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
         edges = get_between_category_edges(n_sample=100)
         similarities = calculate_similarities(edges, **kwargs)
         similarities.to_csv(Path(DATA_DIR, 'between.csv'), index=False)
+
+    if 'within-chain' in types:
+        raise NotImplementedError
+
+    if 'within-seed' in types:
+        raise NotImplementedError
+
+    if 'within-category' in types:
+        raise NotImplementedError
 
 
 def create_single_edge(x, y):
