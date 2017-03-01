@@ -6,7 +6,8 @@ import boto3
 from unipath import Path
 import pydub
 
-from .util import *
+from .edges.messages import (read_downloaded_messages, label_branch_id_list,
+                             label_seed_id, update_audio_filenames)
 from .settings import *
 
 logger = logging.getLogger(__name__)
