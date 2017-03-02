@@ -58,9 +58,9 @@ def format_messages():
                       'generation', 'audio']
 
     messages = read_downloaded_messages()
-    label_branch_id_list(messages)
-    label_seed_id(messages)
-    update_audio_filenames(messages)
+    messages = label_branch_id_list(messages)
+    messages = label_seed_id(messages)
+    messages = update_audio_filenames(messages)
 
     messages = messages[output_columns]
     messages.to_csv(Path(DATA_DIR, 'sounds.csv'), index=False)

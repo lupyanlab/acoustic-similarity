@@ -2,27 +2,50 @@ import itertools
 import pandas
 import numpy
 
-from .messages import read_downloaded_messages, update_audio_filenames
+from .messages import (read_downloaded_messages, update_audio_filenames,
+                       get_messages_by_branch, label_seed_id)
 
 
-def get_within_edges(messages=None, n_sample=None):
-    rand = numpy.random.RandomState()
+def get_all_within_edges():
+    within_chain = get_within_chain_edges()
+    within_seed = get_within_seed_edges()
+    within_category = get_within_category_edges()
 
-    if messages is None:
-        messages = read_downloaded_messages()
-        update_audio_filenames(messages)
+    within_edges = pandas.concat([within_chain, within_seed, within_category],
+                                 ignore_index=True)
+    within_edges['edge_set'] = [frozenset({r.sound_x, r.sound_y})
+                                for r in within_edges.itertuples()]
+    within_edges.drop_duplicates(subset='edge_set', inplace=True)
+    del within_edges['edge_set']
+    return within_edges
 
-    edges = []
-    for category_name, messages in messages.groupby('category'):
-        category_messages = messages.audio.tolist()
-        all_message_pairs = itertools.combinations(category_messages, 2)
-        message_pairs = [(x, y) for x, y in all_message_pairs
-                         if x != y]
 
-        rand.shuffle(message_pairs)
-        n_sample = n_sample or len(message_pairs)
+def get_within_chain_edges():
+    branches = get_messages_by_branch()
+    branches = branches.ix[(branches.generation > 0) & (~branches.rejected)]
+    edges = branches.groupby('branch_id').apply(get_combinations)
+    return edges
 
-        for sound_x, sound_y in message_pairs[:n_sample]:
-            edges.append(dict(sound_x=sound_x, sound_y=sound_y))
 
-    return pandas.DataFrame.from_records(edges)
+def get_within_seed_edges():
+    messages = read_downloaded_messages()
+    messages = update_audio_filenames(messages)
+    messages = label_seed_id(messages)
+    messages = messages.ix[(messages.generation > 0) & (~messages.rejected)]
+    edges = messages.groupby('seed_id').apply(get_combinations)
+    return edges
+
+
+def get_within_category_edges():
+    messages = read_downloaded_messages()
+    messages = update_audio_filenames(messages)
+    messages = messages.ix[(messages.generation > 0) & (~messages.rejected)]
+    edges = messages.groupby('category').apply(get_combinations)
+    return edges
+
+
+def get_combinations(messages):
+    """Given some messages, make all possible edges from it."""
+    audio = messages.audio.tolist()
+    pairs = list(itertools.combinations(audio, 2))
+    return pandas.DataFrame(pairs, columns=['sound_x', 'sound_y'])

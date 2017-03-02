@@ -3,6 +3,7 @@ from unipath import Path
 
 from ..settings import DOWNLOAD_DIR, SOUNDS_DIR
 
+
 def read_downloaded_messages(game='words-in-transition'):
     """Convert the json dump of message models to a friendly csv."""
     messages = pandas.read_json(Path(DOWNLOAD_DIR, 'grunt.Message.json'))
@@ -27,6 +28,7 @@ def read_downloaded_messages(game='words-in-transition'):
 
 def label_branch_id_list(messages):
     """Append a column containing ids for all branches each message is in."""
+    messages = messages.copy()
     labeled_branches = label_branches(messages)
 
     def find_all_branches(message_id):
@@ -34,6 +36,7 @@ def label_branch_id_list(messages):
         return labeled_branches.ix[is_in, 'branch_id'].tolist()
 
     messages['branch_id_list'] = messages.message_id.apply(find_all_branches)
+    return messages
 
 
 def label_branches(messages):
@@ -78,6 +81,7 @@ def collapse_branches(branches):
 
 def label_seed_id(messages):
     """Determine the seed message for each message."""
+    messages = messages.copy()
 
     def find_seed_id(message):
         message_data = messages.ix[messages.message_id == message].squeeze()
@@ -88,10 +92,13 @@ def label_seed_id(messages):
             return find_seed_id(parent)
 
     messages['seed_id'] = messages.message_id.apply(find_seed_id).astype(int)
+    return messages
 
 
 def update_audio_filenames(messages):
+    messages = messages.copy()
     messages['audio'] = new_audio_filenames(messages.message_id)
+    return messages
 
 
 def new_audio_filenames(message_ids, absolute=True):
@@ -102,7 +109,7 @@ def new_audio_filenames(message_ids, absolute=True):
 
 def get_messages_by_branch():
     messages = read_downloaded_messages()
-    update_audio_filenames(messages)
+    messages = update_audio_filenames(messages)
     branches = label_branches(messages)
     expanded = [expand_message_list(branch) for branch in branches.itertuples()]
     labeled = (pandas.concat(expanded, ignore_index=True)
