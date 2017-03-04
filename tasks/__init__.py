@@ -8,5 +8,5 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 from .download import download
-from .compare_sounds import compare_sounds
+from .compare_sounds import compare_sounds, edge_types
 from .compare_words import compare_words

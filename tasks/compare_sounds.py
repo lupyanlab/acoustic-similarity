@@ -5,6 +5,7 @@ from invoke import task
 import pandas
 from acousticsim.main import acoustic_similarity_mapping
 
+from . import edges
 from .edges import (create_single_edge, get_linear_edges,
                     get_between_edges, get_all_within_edges,
                     message_id_from_wav)
@@ -17,7 +18,8 @@ from .settings import *
     y="Path to second wav file. Optional.",
     json_kwargs="Key word args to pass to acoustic_similarity_mapping function",
 ))
-def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
+def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None,
+                   no_defaults=False):
     """Compute acoustic similarity between .wav files.
 
     Run MFCC comparisons and return the distances:
@@ -31,6 +33,9 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
 
     """
     kwargs = json.loads(json_kwargs) if json_kwargs else {}
+
+    if not no_defaults:
+        kwargs.update({'rep': 'mfcc', 'num_coeffs': 12, 'output_sim': True})
 
     if x and y:
         edges = create_single_edge(x, y)
@@ -57,15 +62,56 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None):
         if edge_type == 'linear':
             edges = get_linear_edges()
         elif edge_type == 'between':
-            edges = get_between_edges(n_sample=100)
+            edges = get_between_edges(n_sample=100, seed=200)
         elif edge_type == 'within':
             edges = get_all_within_edges()
         else:
             raise NotImplementedError('edge type "{}"'.format(edge_type))
 
         similarities = calculate_similarities(edges, **kwargs)
-        similarities.to_csv(Path(DATA_DIR, '{}.csv'.format(edge_type)),
+        similarities.to_csv(Path(SIMILARITIES_DIR, '{}.csv'.format(edge_type)),
                             index=False)
+
+
+@task
+def edge_types(ctx):
+    within = pandas.read_csv(Path(SIMILARITIES_DIR, 'within.csv'))
+    between = pandas.read_csv(Path(SIMILARITIES_DIR, 'between.csv'))
+    similarities = pandas.concat([within, between], ignore_index=True)
+
+    # Within category edge types
+
+    linear_edges = edges.linear.get_linear_edges()
+    linear_edges = edges.messages.get_message_ids_for_edge(linear_edges)
+    linear_edges = linear_edges.merge(similarities)
+    linear_edges.to_csv(Path(DATA_DIR, 'linear.csv'), index=False)
+
+    chain_edges = edges.within.get_within_chain_edges()
+    chain_edges = edges.messages.get_message_ids_for_edge(chain_edges)
+    chain_edges = chain_edges.merge(similarities)
+    chain_edges.to_csv(Path(DATA_DIR, 'within_chain.csv'), index=False)
+
+    seed_edges = edges.within.get_within_seed_edges()
+    seed_edges = edges.messages.get_message_ids_for_edge(seed_edges)
+    seed_edges = seed_edges.merge(similarities)
+    seed_edges.to_csv(Path(DATA_DIR, 'within_seed.csv'), index=False)
+
+    category_edges = edges.within.get_within_category_edges()
+    category_edges = edges.messages.get_message_ids_for_edge(category_edges)
+    category_edges = category_edges.merge(similarities)
+    category_edges.to_csv(Path(DATA_DIR, 'within_category.csv'), index=False)
+
+    # Between category edge types
+
+    between_edges = get_between_edges(n_sample=100, seed=200)
+    between_edges = edges.messages.get_message_ids_for_edge(between_edges)
+    between_edges = between_edges.merge(similarities)
+    between_edges.to_csv(Path(DATA_DIR, 'between_category.csv'), index=False)
+
+
+@task
+def between_edge_types(ctx):
+    similarities = pandas.read_csv(Path(DATA_DIR))
 
 
 def calculate_similarities(edges, **kwargs):

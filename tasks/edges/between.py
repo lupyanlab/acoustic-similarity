@@ -4,17 +4,17 @@ import numpy
 from .messages import read_downloaded_messages, update_audio_filenames
 
 
-def get_between_edges(messages=None, n_sample=10):
+def get_between_edges(messages=None, n_sample=10, seed=None):
     if messages is None:
         messages = read_downloaded_messages()
-        update_audio_filenames(messages)
+        messages = update_audio_filenames(messages)
 
     category_names = messages.category.unique()
     grouped_messages = messages.groupby('category')
     categories = {name: grouped_messages.get_group(name)
                   for name in category_names}
 
-    rand = numpy.random.RandomState()
+    rand = numpy.random.RandomState(seed)
 
     edges = []
     for name in category_names:

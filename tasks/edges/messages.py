@@ -138,3 +138,10 @@ def message_id_from_wav(x):
         return int(name)
     except ValueError:
         return name
+
+
+def get_message_ids_for_edge(frame):
+    frame = frame.copy()
+    frame['sound_x'] = frame.sound_x.apply(message_id_from_wav)
+    frame['sound_y'] = frame.sound_y.apply(message_id_from_wav)
+    return frame
