@@ -7,7 +7,7 @@ from acousticsim.main import acoustic_similarity_mapping
 
 from . import edges
 from .edges import (create_single_edge, get_linear_edges,
-                    get_between_edges, get_all_within_edges,
+                    get_all_between_edges, get_all_within_edges,
                     message_id_from_wav)
 from .settings import *
 
@@ -62,7 +62,7 @@ def compare_sounds(ctx, type=None, x=None, y=None, json_kwargs=None,
         if edge_type == 'linear':
             edges = get_linear_edges()
         elif edge_type == 'between':
-            edges = get_between_edges(n_sample=100, seed=200)
+            edges = get_all_between_edges()
         elif edge_type == 'within':
             edges = get_all_within_edges()
         else:

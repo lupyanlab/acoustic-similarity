@@ -6,10 +6,8 @@ DATA_DIR = Path(PROJ_ROOT, 'data')
 SOUNDS_DIR = Path(DATA_DIR, 'sounds')
 WORDS_DIR = Path(DATA_DIR, 'words')
 SIMILARITIES_DIR = Path(DATA_DIR, 'similarities')
-EDGES_DIR = Path(DATA_DIR, 'edges')
 
-expected_dirs = [DOWNLOAD_DIR, DATA_DIR, SOUNDS_DIR,
-                 SIMILARITIES_DIR, EDGES_DIR]
+expected_dirs = [DOWNLOAD_DIR, DATA_DIR, SOUNDS_DIR, SIMILARITIES_DIR]
 for expected_dir in expected_dirs:
     if not expected_dir.isdir():
         expected_dir.mkdir()
