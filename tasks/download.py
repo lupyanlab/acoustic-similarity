@@ -6,8 +6,10 @@ import boto3
 from unipath import Path
 import pydub
 
-from .edges.messages import (read_downloaded_messages, label_branch_id_list,
+from .edges.messages import (read_downloaded_messages,
+                             label_branch_id_list,
                              label_seed_id, update_audio_filenames)
+from .edges.within import get_linear_edges
 from .settings import *
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,20 @@ def download(ctx, filename=None, profile=None, overwrite=False, verbose=False):
     format_messages()
     if 'words-in-transition.zip' in files:
         unpack_and_cleanup_zip()
+
+
+@task
+def create_edges_for_judgments(ctx):
+    edges = get_linear_edges()
+
+    def path_relative_to_judgments_dir(abspaths):
+        return abspaths.apply(lambda abspath: Path('../data/sounds',
+                                                   Path(abspath).name))
+
+    edges['sound_x'] = path_relative_to_judgments_dir(edges.sound_x)
+    edges['sound_y'] = path_relative_to_judgments_dir(edges.sound_y)
+
+    edges.to_csv('judgments/linear_edges.csv', index=False)
 
 
 def determine_files_to_download(filename, overwrite):

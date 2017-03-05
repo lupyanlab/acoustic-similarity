@@ -8,8 +8,7 @@ from unipath import Path
 import pandas
 import numpy
 
-from tasks.edges import get_linear_edges
-from tasks.settings import *
+DATA_DIR = Path('../data/judgments')
 
 TITLE = "Judge the similarity between two sounds"
 INSTRUCTIONS = """\
@@ -188,17 +187,16 @@ class SimilarityJudgments(object):
 class Trials(object):
     def __init__(self, seed=None, completed_csv=None):
         # Start with info for (gen i, gen i + 1) edges.
-        edges = get_linear_edges()
-        unique = edges[['sound_x', 'sound_y']].drop_duplicates()
+        edges = pandas.read_csv('linear_edges.csv')
 
         try:
             previous_data = pandas.read_csv(completed_csv)
             completed_edges = Trials.edges_to_sets(previous_data)
         except ValueError, IOError:
             logging.warning('Could not find existing data. Running all trials.')
-            trials = unique  # all trials are new
+            trials = edges  # all trials are new
         else:
-            trials = Trials.remove_completed_trials(unique, completed_edges)
+            trials = Trials.remove_completed_trials(edges, completed_edges)
 
         self.random = numpy.random.RandomState(seed)
         trials.insert(0, 'block_ix',
@@ -220,13 +218,13 @@ class Trials(object):
         return blocks
 
     @staticmethod
-    def remove_completed_trials(unique, completed_edges):
-        is_unfinished = (pandas.Series(Trials.edges_to_sets(unique),
-                                       index=unique.index)
+    def remove_completed_trials(edges, completed_edges):
+        is_unfinished = (pandas.Series(Trials.edges_to_sets(edges),
+                                       index=edges.index)
                                .apply(lambda x: x not in completed_edges))
-        unfinished = unique[is_unfinished]
+        unfinished = edges[is_unfinished]
         logging.warning('Dropped {} of {} total trials ({} left)'.format(
-            (~is_unfinished).sum(), len(unique), len(unfinished)
+            (~is_unfinished).sum(), len(edges), len(unfinished)
         ))
         return unfinished
 
