@@ -103,7 +103,7 @@ def edge_types(ctx):
 
     # Between category edge types
 
-    between_edges = get_between_edges(n_sample=100, seed=200)
+    between_edges = edges.between.get_between_category_fixed_edges()
     between_edges = edges.messages.get_message_ids_for_edge(between_edges)
     between_edges = between_edges.merge(similarities)
     between_edges.to_csv(Path(DATA_DIR, 'between_category.csv'), index=False)
