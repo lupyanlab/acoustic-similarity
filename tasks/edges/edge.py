@@ -14,3 +14,10 @@ def find_sound(x):
     else:
         shortname = '{sounds_dir}/{x}.wav'
         return shortname.format(sounds_dir=SOUNDS_DIR, x=x)
+
+
+def create_edge_set(frame):
+    frame.copy()
+    frame['edge_set'] = [frozenset({r.sound_x, r.sound_y})
+                         for r in frame.itertuples()]
+    return frame

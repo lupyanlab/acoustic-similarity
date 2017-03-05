@@ -7,6 +7,7 @@ from .messages import (read_downloaded_messages, update_audio_filenames,
 
 
 def get_all_within_edges():
+    linear = get_linear_edges()
     within_chain = get_within_chain_edges()
     within_seed = get_within_seed_edges()
     within_category = get_within_category_edges()
@@ -18,6 +19,25 @@ def get_all_within_edges():
     within_edges.drop_duplicates(subset='edge_set', inplace=True)
     del within_edges['edge_set']
     return within_edges
+
+
+def get_linear_edges():
+    branches = get_messages_by_branch()
+    branches = branches.ix[(branches.generation > 0) & (~branches.rejected)]
+
+    def _get_linear_edges(branch):
+        branch = branch.sort_values('generation')
+        sounds = branch.audio.tolist()
+        edges = []
+        for i in range(len(sounds) - 1):
+            edges.append((sounds[i], sounds[i+1]))
+        return pandas.DataFrame.from_records(edges,
+                                             columns=['sound_x', 'sound_y'])
+
+    edges = branches.groupby('branch_id').apply(_get_linear_edges)
+    edges = edges.reset_index(level=0).reset_index(drop=True)
+    return edges
+
 
 
 def get_within_chain_edges():
