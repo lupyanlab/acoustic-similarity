@@ -44,7 +44,7 @@ def download(ctx, filename=None, profile=None, overwrite=False, verbose=False):
 
 
 @task
-def create_edges_for_judgments(ctx):
+def create_info_for_judgments(ctx):
     edges = get_linear_edges()
 
     def path_relative_to_judgments_dir(abspaths):
@@ -53,8 +53,11 @@ def create_edges_for_judgments(ctx):
 
     edges['sound_x'] = path_relative_to_judgments_dir(edges.sound_x)
     edges['sound_y'] = path_relative_to_judgments_dir(edges.sound_y)
-
     edges.to_csv('judgments/linear_edges.csv', index=False)
+
+    messages = read_downloaded_messages()
+    messages = update_audio_filenames(messages)
+    messages.to_csv('judgments/messages.csv', index=False)
 
 
 def determine_files_to_download(filename, overwrite):

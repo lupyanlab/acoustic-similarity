@@ -28,7 +28,6 @@ class SimilarityJudgments(object):
     """Collect similarity judgments comparing two sounds."""
     DATA_COLS = ('name datetime block_ix trial_ix sound_x sound_y '
                  'reversed category similarity notes repeat').split()
-    DATA_DIR = Path(DATA_DIR, 'judgments')
     if not DATA_DIR.isdir():
         DATA_DIR.mkdir()
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
@@ -238,8 +237,7 @@ class Trials(object):
 
     @staticmethod
     def determine_imitation_category(audio):
-        messages = read_downloaded_messages()
-        update_audio_filenames(messages)
+        messages = pandas.read_csv('messages.csv')
         categories = messages[['audio', 'category']]
         categories.set_index('audio', inplace=True)
         return categories.reindex(audio).category.tolist()
