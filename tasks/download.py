@@ -53,10 +53,13 @@ def create_info_for_judgments(ctx):
 
     edges['sound_x'] = path_relative_to_judgments_dir(edges.sound_x)
     edges['sound_y'] = path_relative_to_judgments_dir(edges.sound_y)
+    del edges['branch_id']
     edges.to_csv('judgments/linear_edges.csv', index=False)
 
     messages = read_downloaded_messages()
     messages = update_audio_filenames(messages)
+    messages['audio'] = path_relative_to_judgments_dir(messages.audio)
+    messages = messages[['message_id', 'audio', 'category']]
     messages.to_csv('judgments/messages.csv', index=False)
 
 

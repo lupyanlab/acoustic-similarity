@@ -31,7 +31,7 @@ class SimilarityJudgments(object):
     if not DATA_DIR.isdir():
         DATA_DIR.mkdir()
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
-    LOG_FILE = Path(DATA_DIR, '{name}.log')
+    LOG_FILE = Path('{name}.log')
 
     PRE_DELAY = 0.5
     BETWEEN_DELAY = 0.8  # time between sounds
@@ -52,6 +52,9 @@ class SimilarityJudgments(object):
 
         # Make the trials for this participant.
         self.trials = Trials(seed=seed, completed_csv=fname)
+        logging.critical('Created {} trials'.format(len(self.trials.trials)))
+        self.cur_total_trials = len(self.trials.trials)
+        self.trials.trials.to_csv('trials-remaining-{}.csv'.format(player['name']), index=False)
 
         # Create the trial objects.
         self.win = visual.Window(fullscr=True, units='pix', allowGUI=False)
@@ -67,16 +70,18 @@ class SimilarityJudgments(object):
     def run(self):
         """Run the experiment."""
         self.show_instructions()
-
+        self.cur_trial_index = 0
         for block in self.trials.blocks():
             try:
                 self.run_block(block)
             except QuitExperiment:
+                logging.critical('Participant requested to quit the experiment')
                 break
             else:
                 self.show_break_screen()
 
         self.data_file.close()
+        logging.critical('Experiment is closing down')
         core.quit()
 
     def run_block(self, block):
@@ -88,6 +93,9 @@ class SimilarityJudgments(object):
                 except RepeatTrial:
                     pass
                 else:
+                    self.cur_trial_index += 1
+                    logging.critical('Completed trial {} out of {}: {} - {}'.format(
+                        self.cur_trial_index, self.cur_total_trials, trial.sound_x, trial.sound_y))
                     break
 
 
@@ -112,8 +120,10 @@ class SimilarityJudgments(object):
         try:
             response['similarity'] = self.scale.get_response()
         except ReportError:
+            logging.critical('Reporting error on this trial')
             response['notes'] = self.form.get_response()
         except RepeatTrial:
+            logging.critical('Repeating this trial')
             response['repeat'] = 1
             self.write_trial(**response)
             raise
@@ -162,7 +172,7 @@ class SimilarityJudgments(object):
             row = []
             for name in self.DATA_COLS:
                 value = data.get(name, '')
-                if not value:
+                if value == '':
                     logging.warning('Data for col {} not found'.format(name))
                 elif name in ['sound_x', 'sound_y']:
                     value = SimilarityJudgments.get_message_id_from_path(value)
@@ -176,13 +186,13 @@ class SimilarityJudgments(object):
     @staticmethod
     def get_message_id_from_path(sound_path):
         # e.g., 'path/to/sound/filename.wav' -> 'filename'
-		# Also needs to be able to handle sound_path == numpy.int64
-		try:
-			message_id = Path(sound_path).stem
-		except TypeError:
-			message_id = Path(int(sound_path)).stem
+        # Also needs to be able to handle sound_path == numpy.int64
+        try:
+            message_id = Path(sound_path).stem
+        except TypeError:
+            message_id = Path(int(sound_path)).stem
 
-		return message_id
+        return message_id
 
 
 class Trials(object):
@@ -194,29 +204,31 @@ class Trials(object):
             previous_data = pandas.read_csv(completed_csv)
             completed_edges = Trials.edges_to_sets(previous_data)
         except ValueError, IOError:
-            logging.warning('Could not find existing data. Running all trials.')
+            logging.critical('Could not find existing data. Running all trials.')
             trials = edges  # all trials are new
         else:
             trials = Trials.remove_completed_trials(edges, completed_edges)
 
         self.random = numpy.random.RandomState(seed)
-        trials.insert(0, 'block_ix',
-                      self.random.choice(range(1,5), len(trials)))
-        trials = (trials.sort_values('block_ix')
-                        .reset_index(drop=True))
-        trials.insert(0, 'trial_ix', range(1, len(trials)+1))
-
         trials['reversed'] = self.random.choice(range(2), len(trials))
         trials['category'] = Trials.determine_imitation_category(trials.sound_x)
         # Assumes that sound_x and sound_y come from the same category!
+
+        categories = trials.category.unique()
+        self.random.shuffle(categories)
+        category_blocks = pandas.DataFrame({'category': categories})
+        category_blocks.insert(0, 'block_ix', range(1, len(categories)+1))
+        trials = trials.merge(category_blocks)
+        trials = trials.sort_values('block_ix').reset_index(drop=True)
+        trials.insert(0, 'trial_ix', range(1, len(trials)+1))
 
         self.trials = trials
 
     def blocks(self):
         blocks = [block.itertuples()
                   for _, block in self.trials.groupby('category')]
-        self.random.shuffle(blocks)
         return blocks
+        self.random.shuffle(blocks)
 
     @staticmethod
     def remove_completed_trials(edges, completed_edges):
@@ -224,7 +236,7 @@ class Trials(object):
                                        index=edges.index)
                                .apply(lambda x: x not in completed_edges))
         unfinished = edges[is_unfinished]
-        logging.warning('Dropped {} of {} total trials ({} left)'.format(
+        logging.critical('Already completed {} of {} total trials ({} left)'.format(
             (~is_unfinished).sum(), len(edges), len(unfinished)
         ))
         return unfinished
@@ -238,7 +250,7 @@ class Trials(object):
     @staticmethod
     def determine_imitation_category(audio):
         messages = pandas.read_csv('messages.csv')
-        categories = messages[['audio', 'category']]
+        categories = messages[['audio', 'category']].drop_duplicates()
         categories.set_index('audio', inplace=True)
         return categories.reindex(audio).category.tolist()
 
@@ -367,8 +379,7 @@ class RepeatTrial(Exception):
     pass
 
 if __name__ == '__main__':
-    logging.console.setLevel(logging.WARNING)
     player = get_player_info()
     judgments = SimilarityJudgments(player, overwrite=False)
-    logging.LogFile(judgments.log_file)
+    logging.LogFile(judgments.log_file, level=logging.CRITICAL)
     judgments.run()
