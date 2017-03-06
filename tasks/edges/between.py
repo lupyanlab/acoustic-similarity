@@ -27,10 +27,11 @@ def get_all_between_edges(messages=None, n_sample=10, seed=None):
 #     return pandas.DataFrame.from_records(edges, columns=['sound_x', 'sound_y'])
 
 
-def get_between_category_fixed_edges():
-    messages = read_downloaded_messages()
-    messages = update_audio_filenames(messages)
-    messages = messages.ix[(messages.generation > 0) & (~messages.rejected)]
+def get_between_category_fixed_edges(messages=None):
+    if messages is None:
+        messages = read_downloaded_messages()
+        messages = update_audio_filenames(messages)
+        messages = messages.ix[(messages.generation > 0) & (~messages.rejected)]
     edges = messages.groupby('generation').apply(get_between_combinations)
     edges = remove_duplicate_edges(edges)
     return edges

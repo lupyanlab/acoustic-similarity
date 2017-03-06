@@ -21,9 +21,10 @@ def get_all_within_edges():
     return within_edges
 
 
-def get_linear_edges():
-    branches = get_messages_by_branch()
-    branches = branches.ix[(branches.generation > 0) & (~branches.rejected)]
+def get_linear_edges(branches=None):
+    if branches is None:
+        branches = get_messages_by_branch()
+        branches = branches.ix[(branches.generation > 0) & (~branches.rejected)]
 
     def _get_linear_edges(branch):
         branch = branch.sort_values('generation')
