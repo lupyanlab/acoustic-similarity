@@ -32,6 +32,7 @@ class SimilarityJudgments(object):
     if not DATA_DIR.isdir():
         DATA_DIR.mkdir()
     DATA_FILE = Path(DATA_DIR, '{name}.csv')
+    LOG_FILE = Path(DATA_DIR, '{name}.log')
 
     PRE_DELAY = 0.5
     BETWEEN_DELAY = 0.8  # time between sounds
@@ -48,6 +49,7 @@ class SimilarityJudgments(object):
         self.data_file = open(fname, fmode, 0)
         if write_header:
             self.write_trial()
+        self.log_file = self.LOG_FILE.format(**player)
 
         # Make the trials for this participant.
         self.trials = Trials(seed=seed, completed_csv=fname)
@@ -370,4 +372,5 @@ if __name__ == '__main__':
     logging.console.setLevel(logging.WARNING)
     player = get_player_info()
     judgments = SimilarityJudgments(player, overwrite=False)
+    logging.LogFile(judgments.log_file)
     judgments.run()
