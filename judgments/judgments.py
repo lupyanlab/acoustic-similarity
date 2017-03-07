@@ -142,7 +142,7 @@ class SimilarityJudgments(object):
         self.win.flip()
         event.waitKeys(keyList=['space'])
 
-    def break_screen(self):
+    def show_break_screen(self):
         visual.TextStim(BREAK, **self.text_kwargs).draw()
         self.win.flip()
         event.waitKeys(keyList=['space'])
@@ -228,7 +228,6 @@ class Trials(object):
         blocks = [block.itertuples()
                   for _, block in self.trials.groupby('category')]
         return blocks
-        self.random.shuffle(blocks)
 
     @staticmethod
     def remove_completed_trials(edges, completed_edges):
