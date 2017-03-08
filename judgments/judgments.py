@@ -143,7 +143,7 @@ class SimilarityJudgments(object):
         event.waitKeys(keyList=['space'])
 
     def show_break_screen(self):
-        visual.TextStim(BREAK, **self.text_kwargs).draw()
+        visual.TextStim(text=BREAK, **self.text_kwargs).draw()
         self.win.flip()
         event.waitKeys(keyList=['space'])
 
